@@ -1,0 +1,189 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   corewar.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lgillot- <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2015/10/11 22:27:37 by lgillot-          #+#    #+#             */
+/*   Updated: 2015/10/12 17:15:10 by lgillot-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include <libft.h>
+
+#include <stdio.h>
+
+#include "corewar_priv.h"
+
+uint8_t	deref(t_proc *proc, t_address addr)
+{
+	return (proc->vm->memory[(proc->pc + addr) % MEM_SIZE]);
+}
+
+t_word		deref_word(t_proc *proc, t_address addr)
+{
+	t_word	word;
+
+	word = deref(proc, addr) << 24;
+	word |= deref(proc, addr + 1) << 16;
+	word |= deref(proc, addr + 2) << 8;
+	word |= deref(proc, addr + 3);
+	return (word);
+}
+
+t_word		deref_ind(t_proc *proc, t_address addr)
+{
+	t_address	ind;
+
+	ind = deref(proc, addr) << 8;
+	ind |= deref(proc, addr + 1);
+	return(deref_word(proc, ind));
+}
+
+t_offset	nop_exec(t_proc *proc)
+{
+	(void)proc;
+	return (0);
+}
+
+t_offset	ld_exec(t_proc *proc)
+{
+	uint8_t		coding_byte;
+	uint8_t		coding_first;
+	t_word		word;
+	t_offset	length;
+	uint8_t		reg_num;
+
+	coding_byte = deref(proc, 1);
+	length = 1;
+	coding_first = (coding_byte >> 6) & 0xFF;
+	if (coding_first == DIR_CODE)
+	{
+		word = deref_word(proc, 2);
+		length += 4;
+	}
+	else if (coding_first == IND_CODE)
+	{
+		word = deref_ind(proc, 2);
+		length += 2;
+	}
+	else
+		return(0);
+	reg_num = deref(proc, length + 1);
+	length++;
+	proc->regs[reg_num] = word;
+	return (length);
+};
+
+t_offset	aff_exec(t_proc *proc)
+{
+	uint8_t	coding_byte;
+	uint8_t	reg_num;
+
+	coding_byte = deref(proc, 1);
+	if (coding_byte != REG_CODE << 6)
+		return (0);
+	reg_num = deref(proc, 2);
+	ft_putchar(proc->regs[reg_num]);
+	return (2);
+}
+
+const t_op	op_tab[] =
+{
+	{"nop",	0, nop_exec},
+	{"live", 10, NULL},
+	{"ld", 5, ld_exec},
+	{"st", 5, NULL},
+	{"add", 10, NULL},
+	{"sub", 10, NULL},
+	{"and", 6, NULL},
+	{"or", 6, NULL},
+	{"xor", 6, NULL},
+	{"zjmp", 20, NULL},
+	{"ldi", 25, NULL},
+	{"sti", 25, NULL},
+	{"fork", 800, NULL},
+	{"lld", 10, NULL},
+	{"lldi", 50, NULL},
+	{"lfork", 1000, NULL},
+	{"aff", 2, aff_exec},
+};
+
+t_op	get_curr_op(t_proc *proc)
+{
+	t_opcode	opcode;
+
+	opcode = deref(proc, 0);
+	if (opcode > AFF)
+		return (op_tab[0]);
+	else
+		return (op_tab[opcode]);
+}
+
+void	step(t_proc *proc)
+{
+	t_op		curr_op;
+	t_offset	length;
+
+	if (proc->wait)
+		proc->wait--;
+	else
+	{
+		curr_op = get_curr_op(proc);
+		fprintf(stderr, "Do %s\n", curr_op.name);
+		length = curr_op.exec(proc) + 1;
+		proc->pc = (proc->pc + length) % MEM_SIZE;
+		curr_op = get_curr_op(proc);
+		proc->wait = curr_op.delay;
+	}
+}
+
+t_proc	init_proc(t_vm *vm, t_address pc)
+{
+	t_proc	proc;
+
+	proc  = (t_proc){
+		.vm = vm,
+		.pc = pc,
+	};
+	proc.wait = get_curr_op(&proc).delay;
+	return (proc);
+}
+
+void	debug_proc(t_proc *proc)
+{
+	t_op op;
+
+	op = get_curr_op(proc);
+	fprintf(stderr, "pc: %u, curr_opcode: 0x%02x = %s, wait: %u\n",
+			proc->pc, deref(proc, 0), op.name, proc->wait);
+}
+
+int		main(int argc, char **argv)
+{
+	t_vm	vm;
+	t_proc	proc;
+
+	(void)argc;
+	(void)argv;
+	vm = (t_vm){
+		.memory = {LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
+				   NOP,
+				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 11, 13,
+				   AFF, REG_CODE << 6, 7,
+				   AFF, REG_CODE << 6, 13,
+				   /* data */0, 0, 0, 10},
+		.procs = &proc,
+		.nb_procs = 1,
+	};
+	proc = init_proc(&vm, 0);
+	while (proc.pc < 19)
+	{
+		debug_proc(&proc);
+		step(&proc);
+	}
+	fprintf(stderr, "Halt: ");
+	debug_proc(&proc);
+	return (0);
+}
