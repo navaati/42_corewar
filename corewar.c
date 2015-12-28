@@ -44,7 +44,7 @@ t_word		deref_ind(t_proc *proc, t_address addr)
 t_offset	nop_exec(t_proc *proc)
 {
 	(void)proc;
-	return (0);
+	return (1);
 }
 
 t_offset	ld_exec(t_proc *proc)
@@ -55,22 +55,23 @@ t_offset	ld_exec(t_proc *proc)
 	t_offset	length;
 	uint8_t		reg_num;
 
-	coding_byte = deref(proc, 1);
 	length = 1;
+	coding_byte = deref(proc, length);
+	length++;
 	coding_first = (coding_byte >> 6) & 0xFF;
 	if (coding_first == DIR_CODE)
 	{
-		word = deref_word(proc, 2);
+		word = deref_word(proc, length);
 		length += 4;
 	}
 	else if (coding_first == IND_CODE)
 	{
-		word = deref_ind(proc, 2);
+		word = deref_ind(proc, length);
 		length += 2;
 	}
 	else
 		return(0);
-	reg_num = deref(proc, length + 1);
+	reg_num = deref(proc, length);
 	length++;
 	proc->regs[reg_num] = word;
 	return (length);
@@ -86,7 +87,7 @@ t_offset	aff_exec(t_proc *proc)
 		return (0);
 	reg_num = deref(proc, 2);
 	ft_putchar(proc->regs[reg_num]);
-	return (2);
+	return (3);
 }
 
 const t_op	op_tab[] =
@@ -132,7 +133,7 @@ void	step(t_proc *proc)
 	{
 		curr_op = get_curr_op(proc);
 		fprintf(stderr, "Do %s\n", curr_op.name);
-		length = curr_op.exec(proc) + 1;
+		length = curr_op.exec(proc) % MEM_SIZE;
 		proc->pc = (proc->pc + length) % MEM_SIZE;
 		curr_op = get_curr_op(proc);
 		proc->wait = curr_op.delay;
