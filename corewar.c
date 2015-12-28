@@ -82,6 +82,14 @@ t_offset	ld_exec(t_proc *proc)
 	return (length);
 };
 
+t_offset	zjmp_exec(t_proc *proc)
+{
+	if (proc->carry)
+		return (deref_short(proc, 1));
+	else
+		return (3);
+}
+
 t_offset	aff_exec(t_proc *proc)
 {
 	uint8_t	coding_byte;
@@ -106,7 +114,7 @@ const t_op	op_tab[] =
 	{"and", 6, NULL},
 	{"or", 6, NULL},
 	{"xor", 6, NULL},
-	{"zjmp", 20, NULL},
+	{"zjmp", 20, zjmp_exec},
 	{"ldi", 25, NULL},
 	{"sti", 25, NULL},
 	{"fork", 800, NULL},
