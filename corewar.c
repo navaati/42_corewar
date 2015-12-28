@@ -32,13 +32,18 @@ t_word		deref_word(t_proc *proc, t_address addr)
 	return (word);
 }
 
-t_word		deref_ind(t_proc *proc, t_address addr)
+t_address	deref_short(t_proc *proc, t_address addr)
 {
 	t_address	ind;
 
 	ind = deref(proc, addr) << 8;
 	ind |= deref(proc, addr + 1);
-	return(deref_word(proc, ind));
+	return (ind);
+}
+
+t_word		deref_ind(t_proc *proc, t_address addr)
+{
+	return(deref_word(proc, deref_short(proc, addr)));
 }
 
 t_offset	nop_exec(t_proc *proc)
