@@ -192,15 +192,17 @@ int		main(int argc, char **argv)
 	vm = (t_vm){
 		.memory = {LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
 				   NOP,
-				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 11, 13,
+				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 14, 13,
 				   AFF, REG_CODE << 6, 7,
 				   AFF, REG_CODE << 6, 13,
+				   ZJMP, 255, 255 - 19,
 				   /* data */0, 0, 0, 10},
 		.procs = &proc,
 		.nb_procs = 1,
 	};
 	proc = init_proc(&vm, 0);
-	while (vm.cycles < 19)
+	proc.carry = true;
+	while (vm.cycles < 265)
 		cycle(&vm);
 	fprintf(stderr, "Halt: ");
 	debug_proc(&proc);
