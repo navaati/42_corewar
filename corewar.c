@@ -174,6 +174,14 @@ void	debug_proc(t_proc *proc)
 			proc->pc, deref(proc, 0), op.name, proc->wait);
 }
 
+void	cycle(t_vm *vm)
+{
+	fprintf(stderr, "Cycle %u\n", vm->cycles);
+	debug_proc(vm->procs);
+	step(vm->procs);
+	vm->cycles++;
+}
+
 int		main(int argc, char **argv)
 {
 	t_vm	vm;
@@ -192,11 +200,8 @@ int		main(int argc, char **argv)
 		.nb_procs = 1,
 	};
 	proc = init_proc(&vm, 0);
-	while (proc.pc < 19)
-	{
-		debug_proc(&proc);
-		step(&proc);
-	}
+	while (vm.cycles < 19)
+		cycle(&vm);
 	fprintf(stderr, "Halt: ");
 	debug_proc(&proc);
 	return (0);

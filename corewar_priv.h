@@ -32,9 +32,10 @@ typedef struct s_proc	t_proc;
 
 typedef struct	s_vm
 {
-	uint8_t	memory[MEM_SIZE];
-	t_proc	*procs;
-	size_t	nb_procs;
+	uint8_t		memory[MEM_SIZE];
+	t_proc		*procs;
+	size_t		nb_procs;
+	uint32_t	cycles;
 }				t_vm;
 
 struct			s_proc
