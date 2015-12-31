@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include <libft.h>
+#include <stdlib.h>
 
 #include <stdio.h>
 
@@ -44,6 +45,17 @@ t_address	deref_short(t_proc *proc, t_address addr)
 t_word		deref_ind(t_proc *proc, t_address addr)
 {
 	return(deref_word(proc, deref_short(proc, addr)));
+}
+
+t_proc		*allocate_proc_node(t_vm *vm)
+{
+	t_proc_node	*node;
+
+	if (!(node = malloc(sizeof(*node))))
+		return (NULL);
+	node->next = vm->procs;
+	vm->procs = node;
+	return (&node->proc);
 }
 
 t_offset	nop_exec(t_proc *proc)
@@ -177,15 +189,19 @@ void	debug_proc(t_proc *proc)
 void	cycle(t_vm *vm)
 {
 	fprintf(stderr, "Cycle %u\n", vm->cycles);
-	debug_proc(vm->procs);
-	step(vm->procs);
+	FOREACH_PROC(vm->procs, node)
+	{
+		debug_proc(&node->proc);
+		step(&node->proc);
+	}
 	vm->cycles++;
 }
 
 int		main(int argc, char **argv)
 {
 	t_vm	vm;
-	t_proc	proc;
+	t_proc	*proc1;
+	t_proc	*proc2;
 
 	(void)argc;
 	(void)argv;
@@ -197,14 +213,17 @@ int		main(int argc, char **argv)
 				   AFF, REG_CODE << 6, 13,
 				   ZJMP, 255, 255 - 19,
 				   /* data */0, 0, 0, 10},
-		.procs = &proc,
-		.nb_procs = 1,
+		.procs = NULL,
 	};
-	proc = init_proc(&vm, 0);
-	proc.carry = true;
-	while (vm.cycles < 265)
+	proc1 = allocate_proc_node(&vm);
+	*proc1 = init_proc(&vm, 0);
+	proc1->carry = true;
+	proc2 = allocate_proc_node(&vm);
+	*proc2 = init_proc(&vm, 50);
+	while (vm.procs && vm.cycles < 265)
 		cycle(&vm);
 	fprintf(stderr, "Halt: ");
-	debug_proc(&proc);
+	debug_proc(proc1);
+	debug_proc(proc2);
 	return (0);
 }

@@ -8,7 +8,7 @@
 [ISA](https://docs.google.com/spreadsheets/d/1pFwSCne-mh-u5ZLsjZS8VI9QvecYk-gWTyNaPstjpLE/edit)
 
 TODO:
-- [ ] Champions multiples
+- [X] Champions multiples
 - [ ] Chargement des champions
 - [ ] Compteurs de cycles/live
 - [ ] Instructions manquantes

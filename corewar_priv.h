@@ -28,24 +28,23 @@ _Static_assert(sizeof(t_address) == IND_SIZE, "IND_SIZE != sizeof(t_address)");
 # define LFORK 0x0F
 # define AFF 0x10
 
-typedef struct s_proc	t_proc;
+typedef struct s_proc_node	t_proc_node;
 
 typedef struct	s_vm
 {
 	uint8_t		memory[MEM_SIZE];
-	t_proc		*procs;
-	size_t		nb_procs;
+	t_proc_node	*procs;
 	uint32_t	cycles;
 }				t_vm;
 
-struct			s_proc
+typedef struct	s_proc
 {
 	t_vm		*vm;
 	t_address	pc;
 	bool		carry;
 	t_word		regs[REG_NUMBER];
 	uint16_t	wait;
-};
+}				t_proc;
 
 typedef t_offset(*t_op_exec)(t_proc *proc);
 
@@ -55,5 +54,13 @@ typedef struct	s_op
 	uint16_t	delay;
 	t_op_exec	exec;
 }				t_op;
+
+struct			s_proc_node
+{
+	t_proc			proc;
+	t_proc_node		*next;
+};
+
+# define FOREACH_PROC(head, it) for(t_proc_node *it = (head); it; it = it->next)
 
 #endif
