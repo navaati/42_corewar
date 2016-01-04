@@ -53,8 +53,7 @@ t_proc		*allocate_proc_node(t_vm *vm)
 
 	if (!(node = malloc(sizeof(*node))))
 		return (NULL);
-	node->next = vm->procs;
-	vm->procs = node;
+	LIST_INSERT_HEAD(&vm->procs, node, entries);
 	return (&node->proc);
 }
 
@@ -188,8 +187,10 @@ void	debug_proc(t_proc *proc)
 
 void	cycle(t_vm *vm)
 {
+	t_proc_node	*node;
+
 	fprintf(stderr, "Cycle %u\n", vm->cycles);
-	FOREACH_PROC(vm->procs, node)
+	LIST_FOREACH(node, &vm->procs, entries)
 	{
 		debug_proc(&node->proc);
 		step(&node->proc);
@@ -213,14 +214,14 @@ int		main(int argc, char **argv)
 				   AFF, REG_CODE << 6, 13,
 				   ZJMP, 255, 255 - 19,
 				   /* data */0, 0, 0, 10},
-		.procs = NULL,
+		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
 	};
 	proc1 = allocate_proc_node(&vm);
 	*proc1 = init_proc(&vm, 0);
 	proc1->carry = true;
 	proc2 = allocate_proc_node(&vm);
 	*proc2 = init_proc(&vm, 50);
-	while (vm.procs && vm.cycles < 265)
+	while (!LIST_EMPTY(&vm.procs) && vm.cycles < 265)
 		cycle(&vm);
 	fprintf(stderr, "Halt: ");
 	debug_proc(proc1);

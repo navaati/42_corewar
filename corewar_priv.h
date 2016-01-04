@@ -1,6 +1,8 @@
 #ifndef COREWAR_PRIV_H
 # define COREWAR_PRIV_H
 
+# include <sys/queue.h>
+
 # include "op.h"
 
 typedef uint8_t		t_opcode;
@@ -33,7 +35,7 @@ typedef struct s_proc_node	t_proc_node;
 typedef struct	s_vm
 {
 	uint8_t		memory[MEM_SIZE];
-	t_proc_node	*procs;
+	LIST_HEAD(, s_proc_node)	procs;
 	uint32_t	cycles;
 }				t_vm;
 
@@ -57,10 +59,8 @@ typedef struct	s_op
 
 struct			s_proc_node
 {
-	t_proc			proc;
-	t_proc_node		*next;
+	t_proc					proc;
+	LIST_ENTRY(s_proc_node)	entries;
 };
-
-# define FOREACH_PROC(head, it) for(t_proc_node *it = (head); it; it = it->next)
 
 #endif
