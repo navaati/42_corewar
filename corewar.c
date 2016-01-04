@@ -185,6 +185,54 @@ t_proc	init_proc(t_vm *vm, t_address pc)
 	return (proc);
 }
 
+void	massacre(t_vm *vm)
+{
+	t_proc_node	*node;
+	t_proc_node	*node_temp;
+
+	assert(!LIST_EMPTY(&vm->procs));
+	DBG("Massacre !\n");
+	DBG("Nbr lives: %u\n", vm->nbr_live);
+	DBG("Massacres since last cycle_to_die decrementation: %u\n",
+		vm->last_cycles_decr);
+	if (vm->nbr_live >= NBR_LIVE ||
+		vm->last_cycles_decr >= MAX_CHECKS)
+	{
+		assert(vm->cycle_to_die >= CYCLE_DELTA);
+		vm->cycle_to_die -= CYCLE_DELTA;
+		DBG("Decrementing cycle_to_die of %u cycles\n", CYCLE_DELTA);
+		vm->last_cycles_decr = 0;
+	}
+	else
+		vm->last_cycles_decr++;
+	DBG("Cycles to die: %u\n", vm->cycle_to_die);
+	vm->nbr_live = 0;
+	LIST_FOREACH_SAFE(node, &vm->procs, entries, node_temp)
+	{
+		if (!node->proc.live)
+		{
+			DBG("Batte en mousse at 0x%02x\n", node->proc.pc);
+			LIST_REMOVE(node, entries);
+		}
+	}
+	vm->next_massacre += vm->cycle_to_die;
+}
+
+void	debug_cycles(t_vm *vm)
+{
+	char	progress[40];
+	int		progress_size;
+	int		cycles_done;
+	int		progress_filled;
+
+	progress_size = sizeof(progress);
+	ft_memset(progress, ' ', progress_size);
+	cycles_done = vm->cycle_to_die - (vm->next_massacre - vm->cycles);
+	progress_filled = progress_size * cycles_done / vm->cycle_to_die;
+	ft_memset(progress, '#', progress_filled);
+	DBG("Cycle %u [%.*s]\n", vm->cycles, progress_size, progress);
+}
+
 void	debug_proc(t_proc *proc)
 {
 	t_op op;
@@ -198,12 +246,14 @@ void	cycle(t_vm *vm)
 {
 	t_proc_node	*node;
 
-	DBG("Cycle %u\n", vm->cycles);
+	debug_cycles(vm);
 	LIST_FOREACH(node, &vm->procs, entries)
 	{
 		debug_proc(&node->proc);
 		step(&node->proc);
 	}
+	if (vm->cycles == vm->next_massacre)
+		massacre(vm);
 	vm->cycles++;
 }
 
@@ -224,16 +274,16 @@ int		main(int argc, char **argv)
 				   ZJMP, 255, 255 - 19,
 				   /* data */0, 0, 0, 10},
 		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
+		.cycle_to_die = CYCLE_TO_DIE,
+		.next_massacre = CYCLE_TO_DIE,
 	};
 	proc1 = allocate_proc_node(&vm);
 	*proc1 = init_proc(&vm, 0);
 	proc1->carry = true;
 	proc2 = allocate_proc_node(&vm);
 	*proc2 = init_proc(&vm, 50);
-	while (!LIST_EMPTY(&vm.procs) && vm.cycles < 265)
+	while (!LIST_EMPTY(&vm.procs))
 		cycle(&vm);
-	DBG("Halt: ");
-	debug_proc(proc1);
-	debug_proc(proc2);
+	DBG("\nHalt\n");
 	return (0);
 }

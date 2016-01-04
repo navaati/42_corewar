@@ -8,11 +8,12 @@
 [ISA](https://docs.google.com/spreadsheets/d/1pFwSCne-mh-u5ZLsjZS8VI9QvecYk-gWTyNaPstjpLE/edit)
 
 TODO:
-- [X] Champions multiples
+- [X] Process multiples
+- [X] Compteurs de cycles/live
 - [ ] Chargement des champions
-- [ ] Compteurs de cycles/live
+- [ ] Gestion des champions et de la victoire
 - [ ] Instructions manquantes
-- [ ] Fin des champions/du jeu
+- [X] Fin des process/du jeu
 - [ ] Interface CLI
 - [ ] Belle API pour la GUI
 

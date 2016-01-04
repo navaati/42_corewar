@@ -37,6 +37,10 @@ typedef struct	s_vm
 	uint8_t		memory[MEM_SIZE];
 	LIST_HEAD(, s_proc_node)	procs;
 	uint32_t	cycles;
+	uint32_t	next_massacre;
+	uint16_t	cycle_to_die;
+	uint16_t	last_cycles_decr;
+	uint16_t	nbr_live;
 }				t_vm;
 
 typedef struct	s_proc
@@ -46,6 +50,7 @@ typedef struct	s_proc
 	bool		carry;
 	t_word		regs[REG_NUMBER];
 	uint16_t	wait;
+	bool		live;
 }				t_proc;
 
 typedef t_offset(*t_op_exec)(t_proc *proc);
