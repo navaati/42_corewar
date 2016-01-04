@@ -13,8 +13,6 @@
 #include <libft.h>
 #include <stdlib.h>
 
-#include <stdio.h>
-
 #include "corewar_priv.h"
 
 uint8_t	deref(t_proc *proc, t_address addr)
@@ -138,12 +136,23 @@ const t_op	op_tab[] =
 t_op	get_curr_op(t_proc *proc)
 {
 	t_opcode	opcode;
+	t_op		op;
 
 	opcode = deref(proc, 0);
 	if (opcode > AFF)
-		return (op_tab[0]);
+		op = op_tab[0];
 	else
-		return (op_tab[opcode]);
+	{
+		op = op_tab[opcode];
+#ifdef DEBUG
+		if (!op.exec)
+		{
+			DBG("Opcode not implemented: %s\n", op.name);
+			op = op_tab[0];
+		}
+#endif
+	}
+	return (op);
 }
 
 void	step(t_proc *proc)
@@ -156,7 +165,7 @@ void	step(t_proc *proc)
 	else
 	{
 		curr_op = get_curr_op(proc);
-		fprintf(stderr, "Do %s\n", curr_op.name);
+		DBG("Do %s\n", curr_op.name);
 		length = curr_op.exec(proc) % MEM_SIZE;
 		proc->pc = (proc->pc + length) % MEM_SIZE;
 		curr_op = get_curr_op(proc);
@@ -181,15 +190,15 @@ void	debug_proc(t_proc *proc)
 	t_op op;
 
 	op = get_curr_op(proc);
-	fprintf(stderr, "pc: %u, curr_opcode: 0x%02x = %s, wait: %u\n",
-			proc->pc, deref(proc, 0), op.name, proc->wait);
+	DBG("pc: %u, curr_opcode: 0x%02x = %s, wait: %u\n",
+		proc->pc, deref(proc, 0), op.name, proc->wait);
 }
 
 void	cycle(t_vm *vm)
 {
 	t_proc_node	*node;
 
-	fprintf(stderr, "Cycle %u\n", vm->cycles);
+	DBG("Cycle %u\n", vm->cycles);
 	LIST_FOREACH(node, &vm->procs, entries)
 	{
 		debug_proc(&node->proc);
@@ -223,7 +232,7 @@ int		main(int argc, char **argv)
 	*proc2 = init_proc(&vm, 50);
 	while (!LIST_EMPTY(&vm.procs) && vm.cycles < 265)
 		cycle(&vm);
-	fprintf(stderr, "Halt: ");
+	DBG("Halt: ");
 	debug_proc(proc1);
 	debug_proc(proc2);
 	return (0);
