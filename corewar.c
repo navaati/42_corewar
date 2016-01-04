@@ -61,6 +61,17 @@ t_offset	nop_exec(t_proc *proc)
 	return (1);
 }
 
+t_offset	live_exec(t_proc *proc)
+{
+	t_word	champion;
+
+	champion = deref_word(proc, 1);
+	(void)champion; // TODO: live des champions
+	proc->live = true;
+	proc->vm->nbr_live++;
+	return (5);
+}
+
 t_offset	ld_exec(t_proc *proc)
 {
 	uint8_t		coding_byte;
@@ -115,7 +126,7 @@ t_offset	aff_exec(t_proc *proc)
 const t_op	op_tab[] =
 {
 	{"nop",	0, nop_exec},
-	{"live", 10, NULL},
+	{"live", 10, live_exec},
 	{"ld", 5, ld_exec},
 	{"st", 5, NULL},
 	{"add", 10, NULL},
@@ -268,10 +279,11 @@ int		main(int argc, char **argv)
 	vm = (t_vm){
 		.memory = {LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
 				   NOP,
-				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 14, 13,
+				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 19, 13,
 				   AFF, REG_CODE << 6, 7,
+				   LIVE, 0, 0, 0, 0,
 				   AFF, REG_CODE << 6, 13,
-				   ZJMP, 255, 255 - 19,
+				   ZJMP, 255, 255 - 24,
 				   /* data */0, 0, 0, 10},
 		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
 		.cycle_to_die = CYCLE_TO_DIE,
