@@ -225,6 +225,8 @@ void	massacre(t_vm *vm)
 			DBG("Batte en mousse at 0x%02x\n", node->proc.pc);
 			LIST_REMOVE(node, entries);
 		}
+		else
+			node->proc.live = false;
 	}
 	vm->next_massacre += vm->cycle_to_die;
 }
