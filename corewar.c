@@ -15,6 +15,13 @@
 
 #include "corewar_priv.h"
 
+t_op	get_curr_op(t_proc *proc);
+
+void	forward_pc(t_proc *proc, t_offset addr)
+{
+	proc->pc = (proc->pc + addr % MEM_SIZE) % MEM_SIZE;
+}
+
 uint8_t	deref(t_proc *proc, t_address addr)
 {
 	return (proc->vm->memory[(proc->pc + addr) % MEM_SIZE]);
@@ -110,6 +117,18 @@ t_offset	zjmp_exec(t_proc *proc)
 		return (3);
 }
 
+t_offset	fork_exec(t_proc *proc)
+{
+	t_proc	*new_proc;
+
+	new_proc = allocate_proc_node(proc->vm);
+	*new_proc = *proc;
+	forward_pc(new_proc, deref_short(proc, 1));
+	new_proc->wait = get_curr_op(new_proc).delay;
+	new_proc->live = false;
+	return (3);
+}
+
 t_offset	aff_exec(t_proc *proc)
 {
 	uint8_t	coding_byte;
@@ -137,7 +156,7 @@ const t_op	op_tab[] =
 	{"zjmp", 20, zjmp_exec},
 	{"ldi", 25, NULL},
 	{"sti", 25, NULL},
-	{"fork", 800, NULL},
+	{"fork", 800, fork_exec},
 	{"lld", 10, NULL},
 	{"lldi", 50, NULL},
 	{"lfork", 1000, NULL},
@@ -177,8 +196,8 @@ void	step(t_proc *proc)
 	{
 		curr_op = get_curr_op(proc);
 		DBG("Do %s\n", curr_op.name);
-		length = curr_op.exec(proc) % MEM_SIZE;
-		proc->pc = (proc->pc + length) % MEM_SIZE;
+		length = curr_op.exec(proc);
+		forward_pc(proc, length);
 		curr_op = get_curr_op(proc);
 		proc->wait = curr_op.delay;
 	}
@@ -288,7 +307,12 @@ int		main(int argc, char **argv)
 				   LIVE, 0, 0, 0, 0,
 				   AFF, REG_CODE << 6, 13,
 				   ZJMP, 255, 256 - 24,
-				   /* data */0, 0, 0, 10},
+				   /* data */0, 0, 0, 10,
+				   /* space */0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				   LIVE, 0, 0, 0, 0,
+				   FORK, 255, 256 - 5,
+				   ZJMP, 255, 256 - 8,
+		},
 		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
 		.cycle_to_die = CYCLE_TO_DIE,
 		.next_massacre = CYCLE_TO_DIE,
@@ -297,7 +321,8 @@ int		main(int argc, char **argv)
 	*proc1 = init_proc(&vm, 0);
 	proc1->carry = true;
 	proc2 = allocate_proc_node(&vm);
-	*proc2 = init_proc(&vm, 50);
+	*proc2 = init_proc(&vm, 47);
+	proc2->carry = true;
 	while (cycle(&vm))
 		;
 	DBG("\nHalt\n");
