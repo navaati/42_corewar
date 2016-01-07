@@ -286,7 +286,7 @@ int		main(int argc, char **argv)
 				   AFF, REG_CODE << 6, 7,
 				   LIVE, 0, 0, 0, 0,
 				   AFF, REG_CODE << 6, 13,
-				   ZJMP, 255, 255 - 24,
+				   ZJMP, 255, 256 - 24,
 				   /* data */0, 0, 0, 10},
 		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
 		.cycle_to_die = CYCLE_TO_DIE,
