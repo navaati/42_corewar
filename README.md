@@ -11,7 +11,7 @@ TODO:
 - [X] Process multiples
 - [X] Compteurs de cycles/live
 - [ ] Chargement des champions
-- [ ] Gestion des champions et de la victoire
+- [X] Gestion des champions et de la victoire
 - [ ] Instructions manquantes
 - [X] Fin des process/du jeu
 - [ ] Interface CLI

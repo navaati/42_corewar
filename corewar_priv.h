@@ -32,10 +32,21 @@ _Static_assert(sizeof(t_address) == IND_SIZE, "IND_SIZE != sizeof(t_address)");
 
 typedef struct s_proc_node	t_proc_node;
 
+typedef struct	s_champion
+{
+	char	*name;
+	char	*comment;
+}				t_champion;
+
+# define NO_CHAMPION (-1)
+
 typedef struct	s_vm
 {
 	uint8_t		memory[MEM_SIZE];
 	LIST_HEAD(, s_proc_node)	procs;
+	t_champion	champions[MAX_PLAYERS];
+	size_t		nb_champions;
+	ssize_t		winner;
 	uint32_t	cycles;
 	uint32_t	next_massacre;
 	uint16_t	cycle_to_die;

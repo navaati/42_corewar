@@ -64,11 +64,14 @@ t_offset	nop_exec(t_proc *proc)
 t_offset	live_exec(t_proc *proc)
 {
 	t_word	champion;
+	t_vm	*vm;
 
+	vm = proc->vm;
 	champion = deref_word(proc, 1);
-	(void)champion; // TODO: live des champions
+	if (champion < vm->nb_champions)
+		vm->winner = champion;
 	proc->live = true;
-	proc->vm->nbr_live++;
+	vm->nbr_live++;
 	return (5);
 }
 
@@ -274,9 +277,9 @@ bool	cycle(t_vm *vm)
 
 int		main(int argc, char **argv)
 {
-	t_vm	vm;
-	t_proc	*proc1;
-	t_proc	*proc2;
+	t_vm		vm;
+	t_proc		*proc1;
+	t_proc		*proc2;
 
 	(void)argc;
 	(void)argv;
@@ -290,6 +293,18 @@ int		main(int argc, char **argv)
 				   ZJMP, 255, 256 - 24,
 				   /* data */0, 0, 0, 10},
 		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
+		.champions = {
+		    {
+				.name = "NOPer",
+				.comment = "starts in NOP land",
+			},
+		    {
+				.name = "9er",
+				.comment = "loop on printing nines and \\n's",
+			},
+		},
+		.nb_champions = 2,
+		.winner = NO_CHAMPION,
 		.cycle_to_die = CYCLE_TO_DIE,
 		.next_massacre = CYCLE_TO_DIE,
 	};
@@ -300,6 +315,13 @@ int		main(int argc, char **argv)
 	*proc2 = init_proc(&vm, 50);
 	while (cycle(&vm))
 		;
-	DBG("\nHalt\n");
+	ft_putstr("\nHalt: ");
+	if (vm.winner == NO_CHAMPION)
+		ft_putendl("nobody won\n");
+	else
+	{
+		ft_putstr("winner is ");
+		ft_putendl(vm.champions[vm.winner].name);
+	}
 	return (0);
 }
