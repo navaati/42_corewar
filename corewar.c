@@ -251,6 +251,7 @@ void	debug_proc(t_proc *proc)
 	t_op op;
 
 	op = get_curr_op(proc);
+        (void)op;
 	DBG("pc: %u, curr_opcode: 0x%02x = %s, wait: %u\n",
 		proc->pc, deref(proc, 0), op.name, proc->wait);
 }
