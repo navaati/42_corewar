@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 3.3)
 project("corewar" C)
 
 add_compile_options(-Wall -Wextra -Werror)
-
 add_subdirectory(libft)
 
-include(FindBSDQueue.cmake)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-add_executable(corewar corewar.c)
-target_link_libraries(corewar ft bsd_queues)
+add_subdirectory(lib)
+add_subdirectory(cli)
