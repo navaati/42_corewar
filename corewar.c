@@ -187,18 +187,6 @@ void	step(t_proc *proc)
 	}
 }
 
-t_proc	init_proc(t_vm *vm, t_address pc)
-{
-	t_proc	proc;
-
-	proc  = (t_proc){
-		.vm = vm,
-		.pc = pc,
-	};
-	proc.wait = get_curr_op(&proc).delay;
-	return (proc);
-}
-
 void	massacre(t_vm *vm)
 {
 	t_proc_node	*node;
@@ -275,44 +263,130 @@ bool	cycle(t_vm *vm)
 	return (!LIST_EMPTY(&vm->procs));
 }
 
-int		main(int argc, char **argv)
+void	copy_to_memory(t_vm *vm, t_address pc, void *buf, t_offset size)
 {
-	t_vm		vm;
-	t_proc		*proc1;
-	t_proc		*proc2;
+	t_offset	room_until_end;
 
-	(void)argc;
-	(void)argv;
-	vm = (t_vm){
-		.memory = {LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
-				   NOP,
-				   LD, IND_CODE << 6 | REG_CODE << 4, 0, 19, 13,
-				   AFF, REG_CODE << 6, 7,
-				   LIVE, 0, 0, 0, 0,
-				   AFF, REG_CODE << 6, 13,
-				   ZJMP, 255, 256 - 24,
-				   /* data */0, 0, 0, 10},
-		.procs = LIST_HEAD_INITIALIZER(&vm.procs),
-		.champions = {
-		    {
-				.name = "NOPer",
-				.comment = "starts in NOP land",
-			},
-		    {
-				.name = "9er",
-				.comment = "loop on printing nines and \\n's",
-			},
-		},
-		.nb_champions = 2,
+	room_until_end = MEM_SIZE - pc;
+	if (size < room_until_end)
+		ft_memcpy(vm->memory + pc, buf, size);
+	else
+	{
+		ft_memcpy(vm->memory + pc, buf, room_until_end);
+		ft_memcpy(vm->memory, buf + room_until_end, size - room_until_end);
+	}
+}
+
+t_err	load_champion(t_vm *vm, t_address pc, header_t *header, void *buf)
+{
+	t_champion	*champ;
+	t_proc		*proc;
+
+	assert(vm->nb_champions <= MAX_PLAYERS);
+	if (vm->nb_champions >= MAX_PLAYERS)
+		return (ERR);
+	champ = &vm->champions[vm->nb_champions];
+	ft_memcpy(champ->name, header->prog_name, PROG_NAME_LENGTH);
+	champ->name[PROG_NAME_LENGTH] = '\0';
+	ft_memcpy(champ->comment, header->comment, COMMENT_LENGTH);
+	champ->comment[COMMENT_LENGTH] = '\0';
+	copy_to_memory(vm, pc, buf, header->prog_size);
+	proc = allocate_proc_node(vm);
+	*proc = (t_proc){
+		.vm = vm,
+		.pc = pc,
+		.carry = false,
+		.regs = { vm->nb_champions, 0 },
+		.live = false
+	};
+	proc->wait = get_curr_op(proc).delay;
+	proc->carry = true; // temporary to allow jumping
+	vm->nb_champions++;
+	return (OK);
+}
+
+t_err	load_champion_from_file(t_vm *vm, t_address pc, void *file, size_t size)
+{
+	header_t	*header;
+	void		*buf;
+
+	if (size <= sizeof(header_t))
+		return (ERR);
+	header = (header_t *)file;
+	if (size - sizeof(header_t) < header->prog_size)
+		return (ERR);
+	buf = file + sizeof(header_t);
+	return (load_champion(vm, pc, header, buf));
+}
+
+t_err	init_vm(t_vm *vm,
+				void *files[], size_t sizes[], size_t nb_champs)
+{
+	t_offset	pc_distance;
+	size_t		i;
+
+	*vm = (t_vm){
+		.memory = {},
+		.procs = LIST_HEAD_INITIALIZER(&vm->procs),
+		.champions = {},
+		.nb_champions = 0,
 		.winner = NO_CHAMPION,
 		.cycle_to_die = CYCLE_TO_DIE,
 		.next_massacre = CYCLE_TO_DIE,
 	};
-	proc1 = allocate_proc_node(&vm);
-	*proc1 = init_proc(&vm, 0);
-	proc1->carry = true;
-	proc2 = allocate_proc_node(&vm);
-	*proc2 = init_proc(&vm, 50);
+	pc_distance = MEM_SIZE / nb_champs;
+	i = 0;
+	while (i < nb_champs)
+	{
+		if (!load_champion_from_file(vm, i * pc_distance, files[i], sizes[i]))
+			return (ERR);
+		i++;
+	}
+	return (OK);
+}
+
+uint8_t	niner_code[] = {
+	LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
+	NOP,
+	LD, IND_CODE << 6 | REG_CODE << 4, 0, 19, 13,
+	AFF, REG_CODE << 6, 7,
+	LIVE, 0, 0, 0, 0,
+	AFF, REG_CODE << 6, 13,
+	ZJMP, 255, 256 - 24,
+	/* data */0, 0, 0, 10};
+
+uint8_t noper_code[10] = { NOP };
+
+int		main(int argc, char **argv)
+{
+	t_vm	vm;
+	uint8_t	noper[sizeof(header_t) + sizeof(noper_code)];
+	uint8_t	niner[sizeof(header_t) + sizeof(niner_code)];
+	void	*files[2];
+	size_t	sizes[2];
+
+	(void)argc;
+	(void)argv;
+
+	*((header_t *)noper) = (header_t){
+		.prog_name = "NOPer",
+		.prog_size = sizeof(noper_code),
+		.comment = "starts in NOP land"
+	};
+	ft_memcpy(noper + sizeof(header_t), noper_code, sizeof(noper_code));
+	files[0] = noper;
+	sizes[0] = sizeof(noper);
+
+	*((header_t *)niner) = (header_t){
+		.prog_name = "9er",
+		.prog_size = sizeof(niner_code),
+		.comment = "loop on printing nines and \\n's"
+	};
+	ft_memcpy(niner + sizeof(header_t), niner_code, sizeof(niner_code));
+	files[1] = niner;
+	sizes[1] = sizeof(niner);
+
+	init_vm(&vm, files, sizes, 2);
 	while (cycle(&vm))
 		;
 	ft_putstr("\nHalt: ");

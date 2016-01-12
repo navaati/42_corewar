@@ -34,8 +34,8 @@ typedef struct s_proc_node	t_proc_node;
 
 typedef struct	s_champion
 {
-	char	*name;
-	char	*comment;
+	char	name[PROG_NAME_LENGTH + 1];
+	char	comment[COMMENT_LENGTH + 1];
 }				t_champion;
 
 # define NO_CHAMPION (-1)
