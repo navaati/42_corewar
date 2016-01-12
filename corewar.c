@@ -256,7 +256,7 @@ void	debug_proc(t_proc *proc)
 		proc->pc, deref(proc, 0), op.name, proc->wait);
 }
 
-void	cycle(t_vm *vm)
+bool	cycle(t_vm *vm)
 {
 	t_proc_node	*node;
 
@@ -269,6 +269,7 @@ void	cycle(t_vm *vm)
 	if (vm->cycles == vm->next_massacre)
 		massacre(vm);
 	vm->cycles++;
+	return (!LIST_EMPTY(&vm->procs));
 }
 
 int		main(int argc, char **argv)
@@ -297,8 +298,8 @@ int		main(int argc, char **argv)
 	proc1->carry = true;
 	proc2 = allocate_proc_node(&vm);
 	*proc2 = init_proc(&vm, 50);
-	while (!LIST_EMPTY(&vm.procs))
-		cycle(&vm);
+	while (cycle(&vm))
+		;
 	DBG("\nHalt\n");
 	return (0);
 }
