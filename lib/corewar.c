@@ -65,7 +65,7 @@ t_op	get_curr_op(t_proc *proc)
 	return (op);
 }
 
-void	step(t_proc *proc)
+static void	step(t_proc *proc)
 {
 	t_op		curr_op;
 	t_offset	length;
@@ -83,7 +83,7 @@ void	step(t_proc *proc)
 	}
 }
 
-void	massacre(t_vm *vm)
+static void	massacre(t_vm *vm)
 {
 	t_proc_node	*node;
 	t_proc_node	*node_temp;
@@ -118,7 +118,7 @@ void	massacre(t_vm *vm)
 	vm->next_massacre += vm->cycle_to_die;
 }
 
-void	debug_cycles(t_vm *vm)
+static void	debug_cycles(t_vm *vm)
 {
 	char	progress[40];
 	int		progress_size;
@@ -133,7 +133,7 @@ void	debug_cycles(t_vm *vm)
 	DBG("Cycle %u [%.*s]\n", vm->cycles, progress_size, progress);
 }
 
-void	debug_proc(t_proc *proc)
+static void	debug_proc(t_proc *proc)
 {
 	t_op op;
 
@@ -159,7 +159,7 @@ bool	cycle(t_vm *vm)
 	return (!LIST_EMPTY(&vm->procs));
 }
 
-void	copy_to_memory(t_vm *vm, t_address pc, void *buf, t_offset size)
+static void	copy_to_memory(t_vm *vm, t_address pc, void *buf, t_offset size)
 {
 	t_offset	room_until_end;
 
@@ -173,7 +173,7 @@ void	copy_to_memory(t_vm *vm, t_address pc, void *buf, t_offset size)
 	}
 }
 
-t_err	load_champion(t_vm *vm, t_address pc, header_t *header, void *buf)
+static t_err	load_champion(t_vm *vm, t_address pc, header_t *header, void *buf)
 {
 	t_champion	*champ;
 	t_proc		*proc;
@@ -201,7 +201,7 @@ t_err	load_champion(t_vm *vm, t_address pc, header_t *header, void *buf)
 	return (OK);
 }
 
-t_err	load_champion_from_file(t_vm *vm, t_address pc, void *file, size_t size)
+static t_err	load_champion_from_file(t_vm *vm, t_address pc, void *file, size_t size)
 {
 	header_t	*header;
 	void		*buf;

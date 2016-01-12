@@ -2,13 +2,13 @@
 
 #include "corewar_priv.h"
 
-t_offset	nop_exec(t_proc *proc)
+static t_offset	nop_exec(t_proc *proc)
 {
 	(void)proc;
 	return (1);
 }
 
-t_offset	live_exec(t_proc *proc)
+static t_offset	live_exec(t_proc *proc)
 {
 	t_word	champion;
 	t_vm	*vm;
@@ -22,7 +22,7 @@ t_offset	live_exec(t_proc *proc)
 	return (5);
 }
 
-t_offset	ld_exec(t_proc *proc)
+static t_offset	ld_exec(t_proc *proc)
 {
 	uint8_t		coding_byte;
 	uint8_t		coding_first;
@@ -52,7 +52,7 @@ t_offset	ld_exec(t_proc *proc)
 	return (length);
 };
 
-t_offset	zjmp_exec(t_proc *proc)
+static t_offset	zjmp_exec(t_proc *proc)
 {
 	if (proc->carry)
 		return (deref_short(proc, 1));
@@ -60,7 +60,7 @@ t_offset	zjmp_exec(t_proc *proc)
 		return (3);
 }
 
-t_offset	aff_exec(t_proc *proc)
+static t_offset	aff_exec(t_proc *proc)
 {
 	uint8_t	coding_byte;
 	uint8_t	reg_num;
