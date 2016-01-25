@@ -1,7 +1,11 @@
 #ifndef COREWAR_PRIV_H
 # define COREWAR_PRIV_H
 
-# include <sys/queue.h>
+# ifdef USE_LIBBSD_QUEUE_H
+#  include <bsd/sys/queue.h>
+# else
+#  include <sys/queue.h>
+# endif
 
 # include "op.h"
 
