@@ -54,7 +54,7 @@ t_op	get_curr_op(t_proc *proc)
 	else
 	{
 		op = op_tab[opcode];
-#ifdef DEBUG
+#ifndef NDEBUG
 		if (!op.exec)
 		{
 			DBG("Opcode not implemented: %s\n", op.name);
