@@ -111,6 +111,7 @@ static void	massacre(t_vm *vm)
 		{
 			DBG("Batte en mousse at 0x%02x\n", node->proc.pc);
 			LIST_REMOVE(node, entries);
+			free(node);
 		}
 		else
 			node->proc.live = false;
