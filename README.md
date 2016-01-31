@@ -10,7 +10,7 @@
 TODO:
 - [X] Process multiples
 - [X] Compteurs de cycles/live
-- [ ] Chargement des champions
+- [X] Chargement des champions
 - [X] Gestion des champions et de la victoire
 - [ ] Instructions manquantes
 - [X] Fin des process/du jeu

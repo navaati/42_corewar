@@ -1,55 +1,89 @@
 #include <libft.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <corewar.h>
 
-uint8_t	niner_code[] = {
-	LD, DIR_CODE << 6 | REG_CODE << 4, 0, 0, 5, 57, 7,
-	NOP,
-	LD, IND_CODE << 6 | REG_CODE << 4, 0, 19, 13,
-	AFF, REG_CODE << 6, 7,
-	LIVE, 0, 0, 0, 0,
-	AFF, REG_CODE << 6, 13,
-	ZJMP, 255, 256 - 24,
-	/* data */0, 0, 0, 10};
+static t_err	read_file(const char *filename, void **file, size_t *size)
+{
+	int			fd;
+	header_t	header;
+	size_t		l_size;
+	void		*l_file;
 
-uint8_t noper_code[10] = { NOP };
+	if((fd = open(filename, O_RDONLY)) < 0)
+	{
+		ft_putstr_fd("Cannot open ", 2);
+		ft_putendl_fd(filename, 2);
+		return (ERR);
+	}
+	if (!ft_fread(fd, &header, sizeof(header_t)))
+	{
+		ft_putendl_fd("Read failed", 2);
+		GOTO(close);
+	}
+	l_size = sizeof(header_t) + be32toh(header.prog_size);
+	if (!(l_file = malloc(l_size)))
+	{
+		ft_putstr_fd("Cannot allocate memory", 2);
+		GOTO(close);
+	}
+	*((header_t *)l_file) = header;
+	if (!ft_fread(fd, l_file + sizeof(header_t), be32toh(header.prog_size)))
+	{
+		ft_putendl_fd("Read failed", 2);
+		GOTO(free);
+	}
+	close(fd);
+	*size = l_size;
+	*file = l_file;
+	return (OK);
+free:
+	free(l_file);
+close:
+	close(fd);
+	return (ERR);
+}
+
+static t_err	init(t_vm *vm, int argc, char **argv)
+{
+	t_err	ret;
+	void	*files[MAX_PLAYERS];
+	size_t	sizes[MAX_PLAYERS];
+	int		i;
+
+	ret = ERR;
+	i = 0;
+	while (i < argc)
+	{
+		if (!read_file(argv[i], &files[i], &sizes[i]))
+			GOTO(free);
+		i++;
+	}
+	ret = init_vm(vm, files, sizes, i);
+free:
+	while (i)
+	{
+		free(files[i - 1]);
+		i--;
+	}
+	return (ret);
+}
 
 int		main(int argc, char **argv)
 {
 	t_vm	vm;
-	uint8_t	noper[sizeof(header_t) + sizeof(noper_code)];
-	uint8_t	niner[sizeof(header_t) + sizeof(niner_code)];
-	void	*files[2];
-	size_t	sizes[2];
 
-	(void)argc;
-	(void)argv;
-
-	*((header_t *)noper) = (header_t){
-		.magic = htobe32(COREWAR_EXEC_MAGIC),
-		.prog_name = "NOPer",
-		.prog_size = htobe32(sizeof(noper_code)),
-		.comment = "starts in NOP land"
-	};
-	ft_memcpy(noper + sizeof(header_t), noper_code, sizeof(noper_code));
-	files[0] = noper;
-	sizes[0] = sizeof(noper);
-
-	*((header_t *)niner) = (header_t){
-		.magic = htobe32(COREWAR_EXEC_MAGIC),
-		.prog_name = "9er",
-		.prog_size = htobe32(sizeof(niner_code)),
-		.comment = "loop on printing nines and \\n's"
-	};
-	ft_memcpy(niner + sizeof(header_t), niner_code, sizeof(niner_code));
-	files[1] = niner;
-	sizes[1] = sizeof(niner);
-
-	if (!init_vm(&vm, files, sizes, 2))
+	if (argc < 2 || argc - 1 > MAX_PLAYERS)
 	{
-		ft_putendl_fd("ERROR", 2);
+		ft_putstr("Usage: ");
+		ft_putstr(argv[0]);
+		ft_putendl(" champion1 [champion2] [champion3] [champion4]");
 		return (1);
 	}
+	if (!init(&vm, argc - 1, argv + 1))
+		return (1);
 	while (cycle(&vm))
 		;
 	ft_putstr("\nHalt: ");
