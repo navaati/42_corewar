@@ -22,9 +22,6 @@ typedef struct	s_champ_desc
 	void		*buf;
 }				t_champ_desc;
 
-uint8_t		deref(t_proc *proc, t_address addr);
-t_word		deref_word(t_proc *proc, t_address addr);
-t_address	deref_short(t_proc *proc, t_address addr);
 t_word		deref_ind(t_proc *proc, t_address addr);
 t_proc		*allocate_proc_node(t_vm *vm);
 t_op		get_curr_op(t_proc *proc);

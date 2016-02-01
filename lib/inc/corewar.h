@@ -43,6 +43,7 @@ typedef struct	s_proc
 	t_word		regs[REG_NUMBER];
 	uint16_t	wait;
 	bool		live;
+	void		*priv;
 }				t_proc;
 
 typedef struct	s_proc_node
@@ -57,10 +58,23 @@ typedef struct	s_champion
 	char	comment[COMMENT_LENGTH + 1];
 }				t_champion;
 
+typedef struct	s_frontend
+{
+	void(*step_proc)(t_proc *proc);
+	void(*exec_op)(t_proc *proc, char *op_name, t_offset op_length);
+	void(*massacre)(t_vm *vm);
+	void(*decr_ctd)(t_vm *vm);
+	void(*new_proc)(t_proc *proc);
+	void(*kill_proc)(t_proc *proc);
+	void(*aff)(t_proc *proc, char c);
+	void	*priv;
+}				t_frontend;
+
 # define NO_CHAMPION (-1)
 
 typedef struct	s_vm
 {
+	t_frontend	frontend;
 	uint8_t		memory[MEM_SIZE];
 	LIST_HEAD(, s_proc_node)	procs;
 	t_champion	champions[MAX_PLAYERS];
@@ -73,8 +87,11 @@ typedef struct	s_vm
 	uint16_t	nbr_live;
 }				t_vm;
 
-t_err	init_vm(t_vm *vm,
+t_err	init_vm(t_vm *vm, const t_frontend *frontend,
 				void *files[], size_t sizes[], size_t nb_champs);
 bool	cycle(t_vm *vm);
+uint8_t		deref(t_proc *proc, t_address addr);
+t_word		deref_word(t_proc *proc, t_address addr);
+t_address	deref_short(t_proc *proc, t_address addr);
 
 #endif

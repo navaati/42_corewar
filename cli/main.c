@@ -5,6 +5,8 @@
 
 #include <corewar.h>
 
+#include "cli.h"
+
 static t_err	read_file(const char *filename, void **file, size_t *size)
 {
 	int			fd;
@@ -46,6 +48,12 @@ close:
 	return (ERR);
 }
 
+void	cli_aff(t_proc *proc, char c)
+{
+	(void)proc;
+	ft_putchar(c);
+}
+
 static t_err	init(t_vm *vm, int argc, char **argv)
 {
 	t_err	ret;
@@ -61,7 +69,7 @@ static t_err	init(t_vm *vm, int argc, char **argv)
 			GOTO(free);
 		i++;
 	}
-	ret = init_vm(vm, files, sizes, i);
+	ret = init_vm(vm, &debug_frontend, files, sizes, i);
 free:
 	while (i)
 	{
@@ -84,8 +92,9 @@ int		main(int argc, char **argv)
 	}
 	if (!init(&vm, argc - 1, argv + 1))
 		return (1);
-	while (cycle(&vm))
-		;
+	do
+		debug_cycles(&vm);
+	while (cycle(&vm));
 	ft_putstr("\nHalt: ");
 	if (vm.winner == NO_CHAMPION)
 		ft_putendl("nobody won\n");

@@ -1,6 +1,7 @@
 #include <libft.h>
 
 #include "corewar_priv.h"
+#include "hooks.h"
 
 static t_offset	nop_exec(t_proc *proc)
 {
@@ -69,7 +70,7 @@ static t_offset	aff_exec(t_proc *proc)
 	if (coding_byte != REG_CODE << 6)
 		return (0);
 	reg_num = deref(proc, 2);
-	ft_putchar(proc->regs[reg_num]);
+	aff_hook(proc, proc->regs[reg_num]);
 	return (3);
 }
 

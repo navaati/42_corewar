@@ -15,11 +15,11 @@ TODO:
 - [ ] Instructions manquantes
 - [X] Fin des process/du jeu
 - [ ] Interface CLI
-- [ ] Belle API pour la GUI
+- [X] Belle API pour la GUI
 
 ## GUI
 
-TODO (Nono) une fois qu'on aura discuté d'une API (juste une structure à crawler, ou de l'évènementiel avec enregistrement de callbacks ?)
+TODO (Nono) Peut-être d'abord une adaptation du code ncurses existant, puis en Qt
 
 ## Assembleur
 
