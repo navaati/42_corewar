@@ -14,6 +14,17 @@ uint8_t	niner_code[] = {
 
 uint8_t noper_code[10] = { NOP };
 
+static uint32_t	le_to_be(uint32_t x)
+{
+	uint32_t tmp;
+
+	tmp = (x & 0xFF) << 24;
+	tmp |= (x & 0xFF00) << 8;
+	tmp |= (x & 0xFF0000) >> 8;
+	tmp |= (x & 0xFF000000) >> 24;
+	return (tmp);
+}
+
 int		main(int argc, char **argv)
 {
 	t_vm	vm;
@@ -26,8 +37,9 @@ int		main(int argc, char **argv)
 	(void)argv;
 
 	*((header_t *)noper) = (header_t){
+		.magic = le_to_be(COREWAR_EXEC_MAGIC),
 		.prog_name = "NOPer",
-		.prog_size = sizeof(noper_code),
+		.prog_size = le_to_be(sizeof(noper_code)),
 		.comment = "starts in NOP land"
 	};
 	ft_memcpy(noper + sizeof(header_t), noper_code, sizeof(noper_code));
@@ -35,15 +47,20 @@ int		main(int argc, char **argv)
 	sizes[0] = sizeof(noper);
 
 	*((header_t *)niner) = (header_t){
+		.magic = le_to_be(COREWAR_EXEC_MAGIC),
 		.prog_name = "9er",
-		.prog_size = sizeof(niner_code),
+		.prog_size = le_to_be(sizeof(niner_code)),
 		.comment = "loop on printing nines and \\n's"
 	};
 	ft_memcpy(niner + sizeof(header_t), niner_code, sizeof(niner_code));
 	files[1] = niner;
 	sizes[1] = sizeof(niner);
 
-	init_vm(&vm, files, sizes, 2);
+	if (!init_vm(&vm, files, sizes, 2))
+	{
+		ft_putendl_fd("ERROR", 2);
+		return (1);
+	}
 	while (cycle(&vm))
 		;
 	ft_putstr("\nHalt: ");
