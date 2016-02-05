@@ -44,17 +44,6 @@ static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 	return (OK);
 }
 
-static uint32_t	be_to_le(uint32_t x)
-{
-	uint32_t tmp;
-
-	tmp = (x & 0xFF) << 24;
-	tmp |= (x & 0xFF00) << 8;
-	tmp |= (x & 0xFF0000) >> 8;
-	tmp |= (x & 0xFF000000) >> 24;
-	return (tmp);
-}
-
 t_err			load_champion_from_file(t_vm *vm, t_address pc, void *file, size_t size)
 {
 	header_t		*header;
@@ -63,11 +52,11 @@ t_err			load_champion_from_file(t_vm *vm, t_address pc, void *file, size_t size)
 	if (size <= sizeof(header_t))
 		return (ERR);
 	header = (header_t *)file;
-	if (be_to_le(header->magic) != COREWAR_EXEC_MAGIC)
+	if (ft_be32toh(header->magic) != COREWAR_EXEC_MAGIC)
 		return (ERR);
 	desc.name = header->prog_name;
 	desc.comment = header->comment;
-	desc.size = be_to_le(header->prog_size);
+	desc.size = ft_be32toh(header->prog_size);
 	if (desc.size > CHAMP_MAX_SIZE ||
 		size - sizeof(header_t) < desc.size)
 		return (ERR);
