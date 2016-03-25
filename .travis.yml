@@ -4,9 +4,11 @@ compiler:
   - gcc
   - clang
 env:
-  - BUILD_TYPE=Debug
-  - BUILD_TYPE=Release
-  - CFLAGS=-std=c11
+  global:
+    - CFLAGS=-std=c11
+  matrix:
+    - BUILD_TYPE=Debug
+    - BUILD_TYPE=Release
 os:
   - linux
   - osx
