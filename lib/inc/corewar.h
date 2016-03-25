@@ -2,6 +2,7 @@
 # define COREWAR_H
 
 # include <libft.h>
+# include <unistd.h>
 # ifdef USE_LIBBSD_QUEUE_H
 #  include <bsd/sys/queue.h>
 # else
