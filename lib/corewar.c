@@ -117,12 +117,26 @@ static void	massacre(t_vm *vm)
 	vm->next_massacre += vm->cycle_to_die;
 }
 
-bool	cycle(t_vm *vm)
+bool	cycle(t_vm *vm, t_flags *flags)
 {
 	t_proc_node	*node;
 
 	LIST_FOREACH(node, &vm->procs, entries)
 		step(&node->proc);
+
+	if (vm->cycles == flags->d)
+	{
+		int i = 0;
+		while (i < MEM_SIZE) {
+			if (i % 64 == 0)
+				printf("0x%04x : ", i);
+			printf("%02x ", vm->memory[i]);
+			i += 1;
+			if (i % 64 == 0)
+				printf("\n");
+		}
+		exit(0);
+	}
 	if (vm->cycles == vm->next_massacre)
 		massacre(vm);
 	vm->cycles++;

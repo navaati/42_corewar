@@ -87,9 +87,15 @@ typedef struct	s_vm
 	uint16_t	nbr_live;
 }				t_vm;
 
+typedef struct		s_flags
+{
+	unsigned char	v;
+	uint32_t		d;
+}					t_flags;
+
 t_err	init_vm(t_vm *vm, const t_frontend *frontend,
 				void *files[], size_t sizes[], size_t nb_champs);
-bool	cycle(t_vm *vm);
+bool	cycle(t_vm *vm, t_flags *flags);
 uint8_t		deref(t_proc *proc, t_address addr);
 t_word		deref_word(t_proc *proc, t_address addr);
 t_address	deref_short(t_proc *proc, t_address addr);
