@@ -1,6 +1,6 @@
 BUILD_DIR ?= build
 CMAKE_TREE = $(BUILD_DIR)/CMakeFiles/
-BUILD_TYPE ?= Release
+BUILD_TYPE ?= Debug
 GENERATOR ?= "Unix Makefiles"
 
 .PHONY: all clean re fclean cmake
