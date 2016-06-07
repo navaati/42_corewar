@@ -39,7 +39,6 @@ static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 		.live = false
 	};
 	proc->wait = get_curr_op(proc).delay;
-	proc->carry = true; // temporary to allow jumping
 	vm->nb_champions++;
 	return (OK);
 }

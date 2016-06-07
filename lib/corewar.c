@@ -81,7 +81,7 @@ static void	step(t_proc *proc)
 		exec_op_hook(proc, curr_op.name, length);
 		proc->pc = (proc->pc + length) % MEM_SIZE;
 		curr_op = get_curr_op(proc);
-		proc->wait = curr_op.delay;
+		proc->wait = curr_op.delay - 1;
 	}
 }
 

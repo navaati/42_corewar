@@ -50,6 +50,11 @@ static t_offset	ld_exec(t_proc *proc)
 	reg_num = deref(proc, length);
 	length++;
 	proc->regs[reg_num] = word;
+
+	if (proc->regs[reg_num] == 0)
+		proc->carry = true;
+	else
+		proc->carry = false;
 	return (length);
 };
 
