@@ -69,7 +69,7 @@ static t_err	init(t_vm *vm, int argc, char **argv)
 			GOTO(free);
 		i++;
 	}
-	ret = init_vm(vm, &debug_frontend, files, sizes, i);
+	ret = init_vm(vm, &zaz_frontend, files, sizes, i);
 free:
 	while (i)
 	{
@@ -79,22 +79,48 @@ free:
 	return (ret);
 }
 
+void	usage(int argc, char **argv)
+{
+	(void)argc;
+	ft_putstr("Usage: ");
+	ft_putendl(argv[0]);
+	ft_putendl("\t-d X");
+	ft_putendl("\t-v X");
+	ft_putendl("\tchampion1 [champion2] [champion3] [champion4]");
+	exit(-1);
+}
+
+extern t_flags g_flags;
+
+int		get_opt(int argc, char **argv)
+{
+	int ch;
+
+	while ((ch = getopt(argc, argv, "d:v:")) != -1)
+	{
+		if (ch == 'd')
+			g_flags.d = atoi(optarg);
+		else if (ch == 'v')
+			g_flags.v = (unsigned char)atoi(optarg);
+		else
+			usage(argc, argv);
+	}
+
+	if (argc < 2 || argc - optind > MAX_PLAYERS)
+		usage(argc, argv);
+	return (optind);
+}
+
 int		main(int argc, char **argv)
 {
 	t_vm	vm;
 
-	if (argc < 2 || argc - 1 > MAX_PLAYERS)
-	{
-		ft_putstr("Usage: ");
-		ft_putstr(argv[0]);
-		ft_putendl(" champion1 [champion2] [champion3] [champion4]");
-		return (1);
-	}
-	if (!init(&vm, argc - 1, argv + 1))
-		return (1);
-	do
+	int optind = get_opt(argc, argv);
+
+	if (!init(&vm, argc - optind, argv + optind))
+		return (1);	
+	while (cycle(&vm, &g_flags))
 		debug_cycles(&vm);
-	while (cycle(&vm));
 	ft_putstr("\nHalt: ");
 	if (vm.winner == NO_CHAMPION)
 		ft_putendl("nobody won\n");

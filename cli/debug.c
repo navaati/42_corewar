@@ -41,20 +41,20 @@ static void	debug_kill_proc(t_proc *proc)
 	DBG("Batte en mousse at 0x%02x\n", proc->pc);
 }
 
-void		debug_cycles(t_vm *vm)
-{
-	char	progress[40];
-	int		progress_size;
-	int		cycles_done;
-	int		progress_filled;
+// void		debug_cycles(t_vm *vm)
+// {
+// 	char	progress[40];
+// 	int		progress_size;
+// 	int		cycles_done;
+// 	int		progress_filled;
 
-	progress_size = sizeof(progress);
-	ft_memset(progress, ' ', progress_size);
-	cycles_done = vm->cycle_to_die - (vm->next_massacre - vm->cycles);
-	progress_filled = progress_size * cycles_done / vm->cycle_to_die;
-	ft_memset(progress, '#', progress_filled);
-	DBG("Cycle %u [%.*s]\n", vm->cycles, progress_size, progress);
-}
+// 	progress_size = sizeof(progress);
+// 	ft_memset(progress, ' ', progress_size);
+// 	cycles_done = vm->cycle_to_die - (vm->next_massacre - vm->cycles);
+// 	progress_filled = progress_size * cycles_done / vm->cycle_to_die;
+// 	ft_memset(progress, '#', progress_filled);
+// 	DBG("Cycle %u [%.*s]\n", vm->cycles, progress_size, progress);
+// }
 
 const t_frontend	debug_frontend = {
 	.step_proc = debug_step_proc,
