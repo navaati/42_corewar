@@ -43,6 +43,7 @@ typedef struct	s_proc
 	t_word		regs[REG_NUMBER];
 	uint16_t	wait;
 	bool		live;
+	uint32_t	nbr;
 	void		*priv;
 }				t_proc;
 
@@ -58,10 +59,12 @@ typedef struct	s_champion
 	char	comment[COMMENT_LENGTH + 1];
 }				t_champion;
 
+typedef struct s_args t_args;
+
 typedef struct	s_frontend
 {
 	void(*step_proc)(t_proc *proc);
-	void(*exec_op)(t_proc *proc, char *op_name, t_offset op_length);
+	void(*exec_op)(t_args *p, t_proc *proc, char *name, t_offset op_length);
 	void(*massacre)(t_vm *vm);
 	void(*decr_ctd)(t_vm *vm);
 	void(*new_proc)(t_proc *proc);
@@ -87,17 +90,49 @@ typedef struct	s_vm
 	uint16_t	nbr_live;
 }				t_vm;
 
+t_err	init_vm(t_vm *vm, const t_frontend *frontend,
+				void *files[], size_t sizes[], size_t nb_champs);
+uint8_t		deref(t_proc *proc, t_address addr);
+t_word		deref_word(t_proc *proc, t_address addr);
+t_address	deref_short(t_proc *proc, t_address addr);
+
+
+// nonito
+
+typedef t_offset(*t_op_exec)(t_proc *proc);
+
+typedef struct	s_op
+{
+	char		*name;
+	uint16_t	delay;
+	t_op_exec	exec;
+}				t_op;
+
+t_op		get_curr_op(t_proc *proc);
+
 typedef struct		s_flags
 {
 	unsigned char	v;
 	uint32_t		d;
 }					t_flags;
 
-t_err	init_vm(t_vm *vm, const t_frontend *frontend,
-				void *files[], size_t sizes[], size_t nb_champs);
 bool	cycle(t_vm *vm, t_flags *flags);
-uint8_t		deref(t_proc *proc, t_address addr);
-t_word		deref_word(t_proc *proc, t_address addr);
-t_address	deref_short(t_proc *proc, t_address addr);
+
+uint8_t assignate(uint8_t c, t_proc *proc, t_address addr);
+t_word	assignate_word(t_word w, t_proc *proc, t_address addr);
+
+typedef struct	s_field
+{
+	uint8_t		code;
+	t_word		param;	
+}				t_field;
+
+typedef struct	s_args
+{
+	uint8_t		nbr;
+	uint8_t		len;
+	t_field		fields[4];
+}				t_args;
+
 
 #endif

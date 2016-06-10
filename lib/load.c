@@ -18,6 +18,7 @@ static void		copy_to_memory(t_vm *vm, t_address pc, void *buf, t_offset size)
 
 static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 {
+	static uint32_t nbr;
 	t_champion	*champ;
 	t_proc		*proc;
 
@@ -31,15 +32,16 @@ static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 	champ->comment[COMMENT_LENGTH] = '\0';
 	copy_to_memory(vm, pc, desc->buf, desc->size);
 	proc = allocate_proc_node(vm);
+	vm->nb_champions++;
 	*proc = (t_proc){
 		.vm = vm,
+		.nbr = ++nbr,
 		.pc = pc,
 		.carry = false,
 		.regs = { vm->nb_champions, 0 },
 		.live = false
 	};
 	proc->wait = get_curr_op(proc).delay;
-	vm->nb_champions++;
 	return (OK);
 }
 

@@ -6,10 +6,10 @@ void	step_proc_hook(t_proc *proc)
 		proc->vm->frontend.step_proc(proc);
 }
 
-void	exec_op_hook(t_proc *proc, char *op_name, t_offset op_length)
+void	exec_op_hook(t_args *p, t_proc *proc, char *op_name, t_offset op_length)
 {
 	if (proc->vm->frontend.exec_op)
-		proc->vm->frontend.exec_op(proc, op_name, op_length);
+		proc->vm->frontend.exec_op(p, proc, op_name, op_length);
 }
 
 void	massacre_hook(t_vm *vm)

@@ -3,9 +3,52 @@
 #include "corewar_priv.h"
 #include "hooks.h"
 
+static t_args	*gather_args(t_proc *proc, uint8_t max)
+{
+	uint8_t			coding_byte;
+	static t_args	args;
+
+	ft_bzero(&args, sizeof(t_args));
+	// ft_bzero(args.fields, sizeof(t_field) * 4);
+	args.len = 1;
+	coding_byte = deref(proc, args.len);
+
+	args.len += 1;
+
+	int i = 0;
+	while (i < max)
+	{
+		uint8_t code = (coding_byte >> 6) & 0xFF;
+
+		args.fields[i].code = code;
+		if (code == DIR_CODE) {
+			args.fields[i].param = deref_word(proc, args.len);
+			args.len += 4;
+		}
+		else if (code == IND_CODE) {
+			args.fields[i].param = deref_short(proc, args.len);
+			args.len += 2;
+		}
+		else if (code == REG_CODE) {
+			args.fields[i].param = deref(proc, args.len);
+			args.len += 1;
+		}
+		else {
+			break ;
+		}
+
+		i += 1;
+		args.nbr += 1;
+		coding_byte = coding_byte << 2;
+	}
+	return (&args);
+}
+
 static t_offset	nop_exec(t_proc *proc)
 {
 	(void)proc;
+	// t_word params[5] = { 0 };
+	// exec_op_hook(params, proc, "nop", 1);
 	return (1);
 }
 
@@ -20,50 +63,101 @@ static t_offset	live_exec(t_proc *proc)
 		vm->winner = champion;
 	proc->live = true;
 	vm->nbr_live++;
+
+	// t_args *args = NULL;
+	// *args = (t_args){ .len = 5, .fields = { { .param = champion } } };
+
+	// exec_op_hook(args, proc, "live", args->len);
+
 	return (5);
 }
 
 static t_offset	ld_exec(t_proc *proc)
 {
-	uint8_t		coding_byte;
-	uint8_t		coding_first;
-	t_word		word;
-	t_offset	length;
-	uint8_t		reg_num;
+	t_args *args = gather_args(proc, 2);
 
-	length = 1;
-	coding_byte = deref(proc, length);
-	length++;
-	coding_first = (coding_byte >> 6) & 0xFF;
-	if (coding_first == DIR_CODE)
-	{
-		word = deref_word(proc, length);
-		length += 4;
-	}
-	else if (coding_first == IND_CODE)
-	{
-		word = deref_ind(proc, length);
-		length += 2;
+	if (args->fields[0].code != DIR_CODE && args->fields[0].code != IND_CODE )
+		return args->len;
+	if (args->fields[1].code != REG_CODE)
+		return args->len;
+
+	if (args->fields[0].code == IND_CODE) {
+		proc->regs[args->fields[1].param] = deref_word(proc, args->fields[0].param);
+		args->fields[0].param = proc->regs[args->fields[1].param];
 	}
 	else
-		return(0);
-	reg_num = deref(proc, length);
-	length++;
-	proc->regs[reg_num] = word;
+		proc->regs[args->fields[1].param] = args->fields[0].param;
 
-	if (proc->regs[reg_num] == 0)
+	if (proc->regs[args->fields[1].param] == 0)
 		proc->carry = true;
 	else
 		proc->carry = false;
-	return (length);
+
+	exec_op_hook(args, proc, "ld", args->len);
+
+	return (args->len);
 };
+
+static t_offset st_exec(t_proc *proc)
+{
+	t_args *args = gather_args(proc, 2);
+
+	if (args->fields[0].code != REG_CODE)
+		return args->len;
+	if (args->fields[1].code != IND_CODE && args->fields[1].code != REG_CODE )
+		return args->len;
+
+	if (args->fields[1].code == IND_CODE)
+		assignate_word(proc->regs[args->fields[0].param], proc, args->fields[1].param);
+	else if (args->fields[1].code == REG_CODE) {
+		if (args->fields[1].param <= 0)
+			return args->len;
+		if (args->fields[0].param <= 0)
+			return args->len;
+		proc->regs[args->fields[1].param] = proc->regs[args->fields[0].param];
+	}
+
+	exec_op_hook(args, proc, "st", args->len);
+
+	return (args->len);
+}
+
+static t_offset add_exec(t_proc *proc)
+{
+	t_args *args = gather_args(proc, 3);
+
+	if (args->fields[0].code != REG_CODE)
+		return args->len;
+	if (args->fields[1].code != REG_CODE)
+		return args->len;
+	if (args->fields[2].code != REG_CODE)
+		return args->len;
+
+	proc->regs[args->fields[2].param - 1] = proc->regs[args->fields[0].param - 1] + proc->regs[args->fields[1].param - 1];
+
+	if (proc->regs[args->fields[2].param - 1] == 0)
+		proc->carry = true;
+	else
+		proc->carry = false;
+
+	exec_op_hook(args, proc, "add", args->len);
+
+	return (args->len);
+
+}
 
 static t_offset	zjmp_exec(t_proc *proc)
 {
-	if (proc->carry)
+	if (proc->carry){
+		// t_word params[5] = { 1, deref_short(proc, 1), 0 };
+		// exec_op_hook(params, proc, "zjmp", deref_short(proc, 1));
 		return (deref_short(proc, 1));
-	else
+	}
+	else {
+		// t_word params[5] = { 1, deref_short(proc, 1), 0 };
+		// exec_op_hook(params, proc, "zjmp", 3);
 		return (3);
+	}
 }
 
 static t_offset	aff_exec(t_proc *proc)
@@ -81,11 +175,11 @@ static t_offset	aff_exec(t_proc *proc)
 
 const t_op	op_tab[] =
 {
-	{"nop",	0, nop_exec},
+	{"nop",	1, nop_exec},
 	{"live", 10, live_exec},
 	{"ld", 5, ld_exec},
-	{"st", 5, NULL},
-	{"add", 10, NULL},
+	{"st", 5, st_exec},
+	{"add", 10, add_exec},
 	{"sub", 10, NULL},
 	{"and", 6, NULL},
 	{"or", 6, NULL},

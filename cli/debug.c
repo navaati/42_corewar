@@ -11,10 +11,10 @@ static void	debug_step_proc(t_proc *proc)
 		proc->pc, deref(proc, 0), proc->wait);
 }
 
-static void	debug_exec_op(t_proc *proc, char *op_name, t_offset op_length)
+static void	debug_exec_op(t_args *p, t_proc *proc, char *op_name, t_offset op_length)
 {
+	(void)p;
 	(void)proc;
-	(void)op_name;
 	(void)op_length;
 	DBG("Do %s\n", op_name);
 }

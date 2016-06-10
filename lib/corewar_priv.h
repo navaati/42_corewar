@@ -5,14 +5,14 @@
 
 _Static_assert(sizeof(t_address) == IND_SIZE, "IND_SIZE != sizeof(t_address)");
 
-typedef t_offset(*t_op_exec)(t_proc *proc);
+// typedef t_offset(*t_op_exec)(t_proc *proc);
 
-typedef struct	s_op
-{
-	char		*name;
-	uint16_t	delay;
-	t_op_exec	exec;
-}				t_op;
+// typedef struct	s_op
+// {
+// 	char		*name;
+// 	uint16_t	delay;
+// 	t_op_exec	exec;
+// }				t_op;
 
 typedef struct	s_champ_desc
 {

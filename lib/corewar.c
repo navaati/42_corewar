@@ -4,6 +4,27 @@
 #include "corewar_priv.h"
 #include "hooks.h"
 
+uint8_t assignate(uint8_t c, t_proc *proc, t_address addr)
+{
+	return (proc->vm->memory[(proc->pc + addr) % MEM_SIZE] = c);
+}
+
+t_word	assignate_word(t_word w, t_proc *proc, t_address addr)
+{
+	(void)w;
+	(void)proc;
+	(void)addr;
+
+	proc->vm->memory[(proc->pc + addr) % MEM_SIZE] = (w >> 24) & 0xFF;
+	proc->vm->memory[(proc->pc + addr + 1) % MEM_SIZE] = (w >> 16) & 0xFF;
+	proc->vm->memory[(proc->pc + addr + 2) % MEM_SIZE] = (w >> 8) & 0xFF;
+	proc->vm->memory[(proc->pc + addr + 3) % MEM_SIZE] = (w >> 0) & 0xFF;
+
+	return (w);
+}
+
+// nonito
+
 uint8_t	deref(t_proc *proc, t_address addr)
 {
 	return (proc->vm->memory[(proc->pc + addr) % MEM_SIZE]);
@@ -66,8 +87,9 @@ t_op	get_curr_op(t_proc *proc)
 	return (op);
 }
 
-static void	step(t_proc *proc)
+static void	step(t_proc *proc, t_flags *flags)
 {
+	uint32_t	old_pos;
 	t_op		curr_op;
 	t_offset	length;
 
@@ -77,9 +99,25 @@ static void	step(t_proc *proc)
 	else
 	{
 		curr_op = get_curr_op(proc);
+		old_pos = proc->pc;
 		length = curr_op.exec(proc) % MEM_SIZE;
-		exec_op_hook(proc, curr_op.name, length);
 		proc->pc = (proc->pc + length) % MEM_SIZE;
+		if (flags->v & 0x10 && length != 1) {
+			t_address min = old_pos > proc->pc ? proc->pc : old_pos;
+			t_address max = old_pos < proc->pc ? proc->pc : old_pos;
+				
+			DBG("ADV %d (0x%04x -> 0x%04x) ", max - min, old_pos, proc->pc);
+						
+			if (ft_strcmp(curr_op.name, "zjmp"))
+			{
+				while (min != max) {
+					DBG("%02x ", proc->vm->memory[min]);
+					min += 1;
+				}
+			}
+
+			DBG("\n");
+		}
 		curr_op = get_curr_op(proc);
 		proc->wait = curr_op.delay - 1;
 	}
@@ -122,18 +160,18 @@ bool	cycle(t_vm *vm, t_flags *flags)
 	t_proc_node	*node;
 
 	LIST_FOREACH(node, &vm->procs, entries)
-		step(&node->proc);
+		step(&node->proc, flags);
 
-	if (vm->cycles == flags->d)
+	if (flags->d != 0 && vm->cycles == flags->d)
 	{
 		int i = 0;
 		while (i < MEM_SIZE) {
 			if (i % 64 == 0)
-				printf("0x%04x : ", i);
-			printf("%02x ", vm->memory[i]);
+				DBG("0x%04x : ", i);
+			DBG("%02x ", vm->memory[i]);
 			i += 1;
 			if (i % 64 == 0)
-				printf("\n");
+				DBG("\n");
 		}
 		exit(0);
 	}
@@ -161,10 +199,12 @@ t_err	init_vm(t_vm *vm, const t_frontend *frontend,
 	};
 	pc_distance = MEM_SIZE / nb_champs;
 	i = 0;
+	DBG("VM INIT\n");
 	while (i < nb_champs)
 	{
 		if (!load_champion_from_file(vm, i * pc_distance, files[i], sizes[i]))
 			return (ERR);
+		DBG("A new challenger is comin'\n");
 		i++;
 	}
 	return (OK);
