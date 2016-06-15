@@ -101,14 +101,32 @@ t_address	deref_short(t_proc *proc, t_address addr);
 
 typedef t_offset(*t_op_exec)(t_proc *proc);
 
+// typedef struct	s_op
+// {
+// 	char		*name;
+// 	uint16_t	delay;
+// 	t_op_exec	exec;
+// }				t_op;
+
 typedef struct	s_op
 {
 	char		*name;
-	uint16_t	delay;
-	t_op_exec	exec;
+	int			nbr_params;
+	int			params[MAX_ARGS_NUMBER];
+	int			id;
+	int			delay;
+	char		*description;
+	int			coding_octet;
+	int			magic_param;
 }				t_op;
 
-t_op		get_curr_op(t_proc *proc);
+typedef struct	s_myop
+{
+	const t_op	*src;
+	t_op_exec	exec;
+}				t_myop;
+
+t_myop		get_curr_op(t_proc *proc);
 
 typedef struct		s_flags
 {

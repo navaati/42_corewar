@@ -210,23 +210,23 @@ static t_offset	aff_exec(t_proc *proc)
 	return (3);
 }
 
-const t_op	op_tab[] =
+const t_myop	myop_tab[] =
 {
-	{"nop",	1, nop_exec},
-	{"live", 10, live_exec},
-	{"ld", 5, ld_exec},
-	{"st", 5, st_exec},
-	{"add", 10, add_exec},
-	{"sub", 10, sub_exec},
-	{"and", 6, NULL},
-	{"or", 6, NULL},
-	{"xor", 6, NULL},
-	{"zjmp", 20, zjmp_exec},
-	{"ldi", 25, NULL},
-	{"sti", 25, NULL},
-	{"fork", 800, NULL},
-	{"lld", 10, NULL},
-	{"lldi", 50, NULL},
-	{"lfork", 1000, NULL},
-	{"aff", 2, aff_exec},
+	{ &((t_op){"nop", 1, {0}, 0, 1, "nop", 0, 0}),  nop_exec},
+	{&op_tab[0],  live_exec},
+	{&op_tab[1],  ld_exec},
+	{&op_tab[2],  st_exec},
+	{&op_tab[3],  add_exec},
+	{&op_tab[4],  sub_exec},
+	{&op_tab[5],  NULL},
+	{&op_tab[6],  NULL},
+	{&op_tab[7],  NULL},
+	{&op_tab[8],  zjmp_exec},
+	{&op_tab[9],  NULL},
+	{&op_tab[10], NULL},
+	{&op_tab[11], NULL},
+	{&op_tab[12], NULL},
+	{&op_tab[13], NULL},
+	{&op_tab[14], NULL},
+	{&op_tab[15], aff_exec},
 };

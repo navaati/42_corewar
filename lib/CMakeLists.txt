@@ -2,6 +2,7 @@ include(FindBSDQueue)
 
 add_library(corewar STATIC
   corewar.c
+  op.c
   ops.c
   load.c
   hooks.c

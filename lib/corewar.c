@@ -64,22 +64,22 @@ t_proc		*allocate_proc_node(t_vm *vm)
 	return (&node->proc);
 }
 
-t_op	get_curr_op(t_proc *proc)
+t_myop	get_curr_op(t_proc *proc)
 {
 	t_opcode	opcode;
-	t_op		op;
+	t_myop		op;
 
 	opcode = deref(proc, 0);
 	if (opcode > AFF)
-		op = op_tab[0];
+		op = myop_tab[0];
 	else
 	{
-		op = op_tab[opcode];
+		op = myop_tab[opcode];
 #ifndef NDEBUG
 		if (!op.exec)
 		{
-			DBG("Opcode not implemented: %s\n", op.name);
-			op = op_tab[0];
+			DBG("Opcode not implemented: %s\n", op.src->name);
+			op = myop_tab[0];
 		}
 #endif
 	}
@@ -89,7 +89,7 @@ t_op	get_curr_op(t_proc *proc)
 static void	step(t_proc *proc, t_flags *flags)
 {
 	uint32_t	old_pos;
-	t_op		curr_op;
+	t_myop		curr_op;
 	t_offset	length;
 
 	step_proc_hook(proc);
@@ -107,7 +107,7 @@ static void	step(t_proc *proc, t_flags *flags)
 				
 			DBG("ADV %d (0x%04x -> 0x%04x) ", max - min, old_pos, proc->pc);
 						
-			if (ft_strcmp(curr_op.name, "zjmp"))
+			if (ft_strcmp(curr_op.src->name, "zjmp"))
 			{
 				while (min != max) {
 					DBG("%02x ", proc->vm->memory[min]);
@@ -118,7 +118,7 @@ static void	step(t_proc *proc, t_flags *flags)
 			DBG("\n");
 		}
 		curr_op = get_curr_op(proc);
-		proc->wait = curr_op.delay - 1;
+		proc->wait = curr_op.src->delay - 1;
 	}
 }
 
