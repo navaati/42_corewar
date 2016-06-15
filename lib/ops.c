@@ -86,19 +86,15 @@ static void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 	if (args->nbr != op->nbr_params)
 		LD_RETURN ;
 
-	if (args->fields[1].param <= 0 || args->fields[1].param > REG_NUMBER) {
-		LD_RETURN ;
-	}
-
 	if (args->fields[0].code == IND_CODE) {
-		// DBG("%d\n", args->fields[1].param - 1)
-		proc->regs[args->fields[1].param - 1] = deref_word(proc, args->fields[0].param - args->len);
-		args->fields[0].param = proc->regs[args->fields[1].param - 1];
+		register_set(proc, args->fields[1].param, deref_word(proc, args->fields[0].param - args->len));
+		args->fields[0].param = register_get(proc, args->fields[1].param);
 	}
-	else
-		proc->regs[args->fields[1].param - 1] = args->fields[0].param;
+	else {
+		register_set(proc, args->fields[1].param, args->fields[0].param);
+	}
 
-	if (proc->regs[args->fields[1].param - 1] == 0)
+	if (register_get(proc, args->fields[1].param) == 0)
 		proc->carry = true;
 	else
 		proc->carry = false;
@@ -114,18 +110,15 @@ static void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
 
 	if (args->nbr != op->nbr_params)
 		ST_RETURN ;
-	if (args->fields[0].param <= 0 || args->fields[0].param > REG_NUMBER)
-			ST_RETURN ;
 
-	if (args->fields[1].code == IND_CODE)
-		assignate_word(proc->regs[args->fields[0].param - 1], proc, args->fields[1].param - args->len);
+	if (args->fields[1].code == IND_CODE) {
+		assignate_word(register_get(proc, args->fields[0].param), proc, args->fields[1].param % IDX_MOD - args->len);
+	}
 	else if (args->fields[1].code == REG_CODE) {
-		if (args->fields[1].param <= 0 || args->fields[1].param > REG_NUMBER)
-			ST_RETURN ;
-		proc->regs[args->fields[1].param - 1] = proc->regs[args->fields[0].param - 1];
+		register_set(proc, args->fields[1].param, register_get(proc, args->fields[0].param));
 	}
 
-	ST_RETURN ;
+	exec_op_hook(args, proc, "st", args->len);
 }
 
 #define ADD_RETURN return exec_op_hook(args, proc, "add", args->len)
@@ -138,16 +131,9 @@ static void add_exec(t_proc *proc, const t_op *op)
 	if (args->nbr != op->nbr_params)
 		ADD_RETURN ;
 
-	if (args->fields[0].param < 1 || args->fields[0].param > REG_NUMBER)
-		ADD_RETURN ;
-	if (args->fields[1].param < 1 || args->fields[1].param > REG_NUMBER)
-		ADD_RETURN ;
-	if (args->fields[2].param < 1 || args->fields[2].param > REG_NUMBER)
-		ADD_RETURN ;
+	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) + register_get(proc, args->fields[1].param));
 
-	proc->regs[args->fields[2].param - 1] = proc->regs[args->fields[0].param - 1] + proc->regs[args->fields[1].param - 1];
-
-	if (proc->regs[args->fields[2].param - 1] == 0)
+	if (register_get(proc, args->fields[2].param) == 0)
 		proc->carry = true;
 	else
 		proc->carry = false;
@@ -165,16 +151,9 @@ static void sub_exec(t_proc *proc, const t_op *op)
 	if (args->nbr != op->nbr_params)
 		SUB_RETURN ;
 
-	if (args->fields[0].param < 1 || args->fields[0].param > REG_NUMBER)
-		SUB_RETURN ;
-	if (args->fields[1].param < 1 || args->fields[1].param > REG_NUMBER)
-		SUB_RETURN ;
-	if (args->fields[2].param < 1 || args->fields[2].param > REG_NUMBER)
-		SUB_RETURN ;
+	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) - register_get(proc, args->fields[1].param));
 
-	proc->regs[args->fields[2].param - 1] = proc->regs[args->fields[0].param - 1] - proc->regs[args->fields[1].param - 1];
-
-	if (proc->regs[args->fields[2].param - 1] == 0)
+	if (register_get(proc, args->fields[2].param) == 0)
 		proc->carry = true;
 	else
 		proc->carry = false;
@@ -209,7 +188,7 @@ static void	aff_exec(t_proc *proc, const t_op *op)
 	if (coding_byte != REG_CODE << 6)
 		proc->pc += 2;
 	reg_num = deref(proc, 2);
-	aff_hook(proc, proc->regs[reg_num]);
+	aff_hook(proc, register_get(proc, reg_num));
 	proc->pc += 3;
 }
 
