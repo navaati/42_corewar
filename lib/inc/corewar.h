@@ -99,16 +99,10 @@ t_address	deref_short(t_proc *proc, t_address addr);
 
 // nonito
 
-typedef t_offset(*t_op_exec)(t_proc *proc);
+typedef struct s_op	t_op;
+typedef void(*t_op_exec)(t_proc *proc, const t_op *op);
 
-// typedef struct	s_op
-// {
-// 	char		*name;
-// 	uint16_t	delay;
-// 	t_op_exec	exec;
-// }				t_op;
-
-typedef struct	s_op
+struct	s_op
 {
 	char		*name;
 	int			nbr_params;
@@ -118,7 +112,7 @@ typedef struct	s_op
 	char		*description;
 	int			coding_octet;
 	int			magic_param;
-}				t_op;
+};
 
 typedef struct	s_myop
 {

@@ -29,6 +29,28 @@ static char *op_table[16] = {
 
 typedef void(*t_debug_function)(t_args *p, t_proc *proc, char *op_name, t_offset op_length);
 
+static void show_pc_movement(t_args *args, t_proc *proc, char *op_name, t_offset op_length)
+{
+	(void)args;
+	(void)proc;
+	(void)op_name;
+	(void)op_length;
+
+	if (g_flags.v & 0x10) {
+		t_address min = proc->pc - op_length > proc->pc ? proc->pc : proc->pc - op_length;
+		t_address max = proc->pc - op_length < proc->pc ? proc->pc : proc->pc - op_length;
+			
+		DBG("ADV %d (0x%04x -> 0x%04x) ", max - min, proc->pc - op_length, proc->pc);
+					
+		while (min != max) {
+			DBG("%02x ", proc->vm->memory[min]);
+			min += 1;
+		}
+
+		DBG("\n");
+	}
+}
+
 static void debug_std(t_args *args, t_proc *proc, char *op_name, t_offset op_length)
 {
 	int		i;
@@ -48,6 +70,7 @@ static void debug_std(t_args *args, t_proc *proc, char *op_name, t_offset op_len
 		}
 		DBG("\n");
 	}
+	show_pc_movement(args, proc, op_name, op_length);
 }
 
 static void debug_zjmp(t_args *p, t_proc *proc, char *op_name, t_offset op_length)
@@ -75,6 +98,7 @@ static void debug_live(t_args *p, t_proc *proc, char *op_name, t_offset op_lengt
 	{
 		DBG("P    %d | live %d\n", proc->nbr, (int)p->fields[0].param);
 	}
+	show_pc_movement(p, proc, op_name, op_length);
 }
 
 static t_debug_function debug_array[16] = {

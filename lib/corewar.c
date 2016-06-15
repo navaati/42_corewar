@@ -70,6 +70,7 @@ t_myop	get_curr_op(t_proc *proc)
 	t_myop		op;
 
 	opcode = deref(proc, 0);
+	// DBG("test: %d\n", opcode);
 	if (opcode > AFF)
 		op = myop_tab[0];
 	else
@@ -83,14 +84,13 @@ t_myop	get_curr_op(t_proc *proc)
 		}
 #endif
 	}
+	// DBG("test: %s\n", op.src->name);
 	return (op);
 }
 
-static void	step(t_proc *proc, t_flags *flags)
+static void	step(t_proc *proc)
 {
-	uint32_t	old_pos;
 	t_myop		curr_op;
-	t_offset	length;
 
 	step_proc_hook(proc);
 	if (proc->wait)
@@ -98,25 +98,7 @@ static void	step(t_proc *proc, t_flags *flags)
 	else
 	{
 		curr_op = get_curr_op(proc);
-		old_pos = proc->pc;
-		length = curr_op.exec(proc) % MEM_SIZE;
-		proc->pc = (proc->pc + length) % MEM_SIZE;
-		if (flags->v & 0x10 && length != 1) {
-			t_address min = old_pos > proc->pc ? proc->pc : old_pos;
-			t_address max = old_pos < proc->pc ? proc->pc : old_pos;
-				
-			DBG("ADV %d (0x%04x -> 0x%04x) ", max - min, old_pos, proc->pc);
-						
-			if (ft_strcmp(curr_op.src->name, "zjmp"))
-			{
-				while (min != max) {
-					DBG("%02x ", proc->vm->memory[min]);
-					min += 1;
-				}
-			}
-
-			DBG("\n");
-		}
+		curr_op.exec(proc, curr_op.src);
 		curr_op = get_curr_op(proc);
 		proc->wait = curr_op.src->delay - 1;
 	}
@@ -159,7 +141,7 @@ bool	cycle(t_vm *vm, t_flags *flags)
 	t_proc_node	*node;
 
 	LIST_FOREACH(node, &vm->procs, entries)
-		step(&node->proc, flags);
+		step(&node->proc);
 
 	if (flags->d != 0 && vm->cycles == flags->d)
 	{
