@@ -77,14 +77,12 @@ static void	live_exec(t_proc *proc, const t_op *op)
 	exec_op_hook(&args, proc, "live", args.len);
 }
 
-#define LD_RETURN { return exec_op_hook(args, proc, "ld", args->len); }
-
 static void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 {
 	t_args *args = gather_args(proc, op);
 
 	if (args->nbr != op->nbr_params)
-		LD_RETURN ;
+		return exec_op_hook(args, proc, "ld", args->len);
 
 	if (args->fields[0].code == IND_CODE) {
 		register_set(proc, args->fields[1].param, deref_word(proc, args->fields[0].param - args->len));
@@ -99,17 +97,15 @@ static void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 	else
 		proc->carry = false;
 
-	LD_RETURN ;
+	return exec_op_hook(args, proc, "ld", args->len);
 };
-
-#define ST_RETURN { return (exec_op_hook(args, proc, "st", args->len)); }
 
 static void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
 {
 	t_args *args = gather_args(proc, op);
 
 	if (args->nbr != op->nbr_params)
-		ST_RETURN ;
+		return (exec_op_hook(args, proc, "st", args->len));
 
 	if (args->fields[1].code == IND_CODE) {
 		assignate_word(register_get(proc, args->fields[0].param), proc, args->fields[1].param % IDX_MOD - args->len);
@@ -118,10 +114,8 @@ static void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
 		register_set(proc, args->fields[1].param, register_get(proc, args->fields[0].param));
 	}
 
-	exec_op_hook(args, proc, "st", args->len);
+	return (exec_op_hook(args, proc, "st", args->len));
 }
-
-#define ADD_RETURN return exec_op_hook(args, proc, "add", args->len)
 
 static void add_exec(t_proc *proc, const t_op *op)
 {
@@ -129,7 +123,7 @@ static void add_exec(t_proc *proc, const t_op *op)
 
 	(void)op;
 	if (args->nbr != op->nbr_params)
-		ADD_RETURN ;
+		return exec_op_hook(args, proc, "add", args->len) ;
 
 	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) + register_get(proc, args->fields[1].param));
 
@@ -138,10 +132,8 @@ static void add_exec(t_proc *proc, const t_op *op)
 	else
 		proc->carry = false;
 
-	ADD_RETURN ;
+	return exec_op_hook(args, proc, "add", args->len) ;
 }
-
-#define SUB_RETURN { return (exec_op_hook(args, proc, "sub", args->len)); }
 
 static void sub_exec(t_proc *proc, const t_op *op)
 {
@@ -149,7 +141,7 @@ static void sub_exec(t_proc *proc, const t_op *op)
 
 	(void)op;
 	if (args->nbr != op->nbr_params)
-		SUB_RETURN ;
+		return exec_op_hook(args, proc, "sub", args->len) ;
 
 	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) - register_get(proc, args->fields[1].param));
 
@@ -158,7 +150,7 @@ static void sub_exec(t_proc *proc, const t_op *op)
 	else
 		proc->carry = false;
 
-	SUB_RETURN ;
+	return exec_op_hook(args, proc, "sub", args->len) ;
 }
 
 static void	zjmp_exec(t_proc *proc, const t_op *op)
