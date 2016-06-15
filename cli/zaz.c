@@ -31,21 +31,23 @@ typedef void(*t_debug_function)(t_args *p, t_proc *proc, char *op_name, t_offset
 
 static void debug_std(t_args *args, t_proc *proc, char *op_name, t_offset op_length)
 {
-	(void)proc;
-	(void)op_name;
-	(void)op_length;
+	int		i;
 
-	int i = 0;
-	DBG("P    %d | %s", proc->nbr, op_name);
-	while (i < args->nbr)
+	i = 0;
+	(void)op_length;
+	if (g_flags.v & 0x04)
 	{
-		if (args->fields[i].code == REG_CODE)
-			DBG(" r%d", args->fields[i].param);
-		else
-			DBG(" %d", args->fields[i].param);
-		i += 1;
+		DBG("P    %d | %s", proc->nbr, op_name);
+		while (i < args->nbr)
+		{
+			if (args->fields[i].code == REG_CODE)
+				DBG(" r%d", args->fields[i].param);
+			else
+				DBG(" %d", args->fields[i].param);
+			i += 1;
+		}
+		DBG("\n");
 	}
-	DBG("\n");
 }
 
 static void debug_zjmp(t_args *p, t_proc *proc, char *op_name, t_offset op_length)
@@ -71,10 +73,7 @@ static void debug_live(t_args *p, t_proc *proc, char *op_name, t_offset op_lengt
 	(void)op_length;
 	if (g_flags.v & 0x04)
 	{
-		if (proc->carry)
-			DBG("P    %d | live %d\n", proc->nbr, (signed short)p->fields[0].param);
-		else
-			DBG("P    %d | live %d\n", proc->nbr, (signed short)p->fields[0].param);
+		DBG("P    %d | live %d\n", proc->nbr, (int)p->fields[0].param);
 	}
 }
 
