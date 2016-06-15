@@ -33,9 +33,6 @@ static t_args	*gather_args(t_proc *proc, uint8_t max)
 			args.fields[i].param = deref(proc, args.len);
 			args.len += 1;
 		}
-		else {
-			break ;
-		}
 
 		i += 1;
 		args.nbr += 1;
@@ -64,15 +61,15 @@ static t_offset	live_exec(t_proc *proc)
 	proc->live = true;
 	vm->nbr_live++;
 
-	// t_args *args = NULL;
-	// *args = (t_args){ .len = 5, .fields = { { .param = champion } } };
-
-	// exec_op_hook(args, proc, "live", args->len);
+	t_args args;
+	args = (t_args){ .len = 5, .fields = { { .param = champion } } };
+	exec_op_hook(&args, proc, "live", args.len);
 
 	return (5);
 }
 
-static t_offset	ld_exec(t_proc *proc)
+
+static t_offset	ld_exec(t_proc *proc) // no reg0 protection
 {
 	t_args *args = gather_args(proc, 2);
 
@@ -82,13 +79,13 @@ static t_offset	ld_exec(t_proc *proc)
 		return args->len;
 
 	if (args->fields[0].code == IND_CODE) {
-		proc->regs[args->fields[1].param] = deref_word(proc, args->fields[0].param);
-		args->fields[0].param = proc->regs[args->fields[1].param];
+		proc->regs[args->fields[1].param - 1] = deref_word(proc, args->fields[0].param);
+		args->fields[0].param = proc->regs[args->fields[1].param - 1];
 	}
 	else
-		proc->regs[args->fields[1].param] = args->fields[0].param;
+		proc->regs[args->fields[1].param - 1] = args->fields[0].param;
 
-	if (proc->regs[args->fields[1].param] == 0)
+	if (proc->regs[args->fields[1].param - 1] == 0)
 		proc->carry = true;
 	else
 		proc->carry = false;
@@ -98,7 +95,7 @@ static t_offset	ld_exec(t_proc *proc)
 	return (args->len);
 };
 
-static t_offset st_exec(t_proc *proc)
+static t_offset st_exec(t_proc *proc) // no reg0 protection
 {
 	t_args *args = gather_args(proc, 2);
 
@@ -108,13 +105,13 @@ static t_offset st_exec(t_proc *proc)
 		return args->len;
 
 	if (args->fields[1].code == IND_CODE)
-		assignate_word(proc->regs[args->fields[0].param], proc, args->fields[1].param);
+		assignate_word(proc->regs[args->fields[0].param - 1], proc, args->fields[1].param);
 	else if (args->fields[1].code == REG_CODE) {
 		if (args->fields[1].param <= 0)
 			return args->len;
 		if (args->fields[0].param <= 0)
 			return args->len;
-		proc->regs[args->fields[1].param] = proc->regs[args->fields[0].param];
+		proc->regs[args->fields[1].param - 1] = proc->regs[args->fields[0].param - 1];
 	}
 
 	exec_op_hook(args, proc, "st", args->len);
@@ -127,11 +124,18 @@ static t_offset add_exec(t_proc *proc)
 	t_args *args = gather_args(proc, 3);
 
 	if (args->fields[0].code != REG_CODE)
-		return args->len;
+		return (args->len);
 	if (args->fields[1].code != REG_CODE)
-		return args->len;
+		return (args->len);
 	if (args->fields[2].code != REG_CODE)
-		return args->len;
+		return (args->len);
+
+	if (args->fields[0].param < 1 || args->fields[0].param > REG_NUMBER)
+		return (args->len);
+	if (args->fields[1].param < 1 || args->fields[1].param > REG_NUMBER)
+		return (args->len);
+	if (args->fields[2].param < 1 || args->fields[2].param > REG_NUMBER)
+		return (args->len);
 
 	proc->regs[args->fields[2].param - 1] = proc->regs[args->fields[0].param - 1] + proc->regs[args->fields[1].param - 1];
 
@@ -146,16 +150,49 @@ static t_offset add_exec(t_proc *proc)
 
 }
 
+static t_offset sub_exec(t_proc *proc)
+{
+	t_args *args = gather_args(proc, 3);
+
+	if (args->fields[0].code != REG_CODE)
+		return (args->len);
+	if (args->fields[1].code != REG_CODE)
+		return (args->len);
+	if (args->fields[2].code != REG_CODE)
+		return (args->len);
+
+	if (args->fields[0].param < 1 || args->fields[0].param > REG_NUMBER)
+		return (args->len);
+	if (args->fields[1].param < 1 || args->fields[1].param > REG_NUMBER)
+		return (args->len);
+	if (args->fields[2].param < 1 || args->fields[2].param > REG_NUMBER)
+		return (args->len);
+
+	proc->regs[args->fields[2].param - 1] = proc->regs[args->fields[0].param - 1] - proc->regs[args->fields[1].param - 1];
+
+	if (proc->regs[args->fields[2].param - 1] == 0)
+		proc->carry = true;
+	else
+		proc->carry = false;
+
+	exec_op_hook(args, proc, "sub", args->len);
+
+	return (args->len);
+
+}
+
 static t_offset	zjmp_exec(t_proc *proc)
 {
+	t_args args;
+
 	if (proc->carry){
-		// t_word params[5] = { 1, deref_short(proc, 1), 0 };
-		// exec_op_hook(params, proc, "zjmp", deref_short(proc, 1));
+		args = (t_args){ .len = deref_short(proc, 1), .fields = { { .param = deref_short(proc, 1) } } };
+		exec_op_hook(&args, proc, "zjmp", args.len);
 		return (deref_short(proc, 1));
 	}
 	else {
-		// t_word params[5] = { 1, deref_short(proc, 1), 0 };
-		// exec_op_hook(params, proc, "zjmp", 3);
+		args = (t_args){ .len = deref_short(proc, 1), .fields = { { .param = deref_short(proc, 1) } } };
+		exec_op_hook(&args, proc, "zjmp", args.len);
 		return (3);
 	}
 }
@@ -167,7 +204,7 @@ static t_offset	aff_exec(t_proc *proc)
 
 	coding_byte = deref(proc, 1);
 	if (coding_byte != REG_CODE << 6)
-		return (0);
+		return (2);
 	reg_num = deref(proc, 2);
 	aff_hook(proc, proc->regs[reg_num]);
 	return (3);
@@ -180,7 +217,7 @@ const t_op	op_tab[] =
 	{"ld", 5, ld_exec},
 	{"st", 5, st_exec},
 	{"add", 10, add_exec},
-	{"sub", 10, NULL},
+	{"sub", 10, sub_exec},
 	{"and", 6, NULL},
 	{"or", 6, NULL},
 	{"xor", 6, NULL},
