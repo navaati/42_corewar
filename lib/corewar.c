@@ -22,6 +22,21 @@ t_word	assignate_word(t_word w, t_proc *proc, t_address addr)
 	return (w);
 }
 
+uint8_t register_set(t_proc *proc, uint8_t index, t_word word)
+{
+	if (index <= 0 || index > REG_NUMBER)
+		return (0);
+	proc->regs[index - 1] = word;
+	return (word);
+}
+
+t_word register_get(t_proc *proc, uint8_t index)
+{
+	if (index <= 0 || index > REG_NUMBER)
+		return (0); // ??
+	return (proc->regs[index - 1]);
+}
+
 // nonito
 
 uint8_t	deref(t_proc *proc, t_address addr)

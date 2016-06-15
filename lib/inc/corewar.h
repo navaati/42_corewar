@@ -133,6 +133,9 @@ bool	cycle(t_vm *vm, t_flags *flags);
 uint8_t assignate(uint8_t c, t_proc *proc, t_address addr);
 t_word	assignate_word(t_word w, t_proc *proc, t_address addr);
 
+uint8_t	register_set(t_proc *proc, uint8_t index, t_word word);
+t_word	register_get(t_proc *proc, uint8_t index);
+
 typedef struct	s_field
 {
 	uint8_t		code;
