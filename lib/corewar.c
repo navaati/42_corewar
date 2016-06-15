@@ -15,11 +15,10 @@ t_word	assignate_word(t_word w, t_proc *proc, t_address addr)
 	(void)proc;
 	(void)addr;
 
-	proc->vm->memory[(proc->pc + addr) % MEM_SIZE] = (w >> 24) & 0xFF;
-	proc->vm->memory[(proc->pc + addr + 1) % MEM_SIZE] = (w >> 16) & 0xFF;
-	proc->vm->memory[(proc->pc + addr + 2) % MEM_SIZE] = (w >> 8) & 0xFF;
-	proc->vm->memory[(proc->pc + addr + 3) % MEM_SIZE] = (w >> 0) & 0xFF;
-
+	assignate((w >> 24) & 0xFF, proc, addr);
+	assignate((w >> 24) & 0xFF, proc, addr + 1);
+	assignate((w >> 24) & 0xFF, proc, addr + 2);
+	assignate((w >> 24) & 0xFF, proc, addr + 3);
 	return (w);
 }
 
