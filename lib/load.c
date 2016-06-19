@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <libft.h>
 
 #include "corewar_priv.h"
@@ -32,15 +33,16 @@ static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 	champ->comment[COMMENT_LENGTH] = '\0';
 	copy_to_memory(vm, pc, desc->buf, desc->size);
 	proc = allocate_proc_node(vm);
-	vm->nb_champions--;
 	*proc = (t_proc){
 		.vm = vm,
 		.nbr = ++nbr,
 		.pc = pc,
 		.carry = false,
-		.regs = { vm->nb_champions, 0 },
+		.regs = { ULONG_MAX - vm->nb_champions, 0 },
 		.live = false
 	};
+	vm->nb_champions++;
+	vm->winner = vm->nb_champions;
 	proc->wait = get_curr_op(proc).src->delay;
 	return (OK);
 }
