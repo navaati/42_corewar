@@ -16,9 +16,9 @@ t_word	assignate_word(t_word w, t_proc *proc, t_address addr)
 	(void)addr;
 
 	assignate((w >> 24) & 0xFF, proc, addr);
-	assignate((w >> 24) & 0xFF, proc, addr + 1);
-	assignate((w >> 24) & 0xFF, proc, addr + 2);
-	assignate((w >> 24) & 0xFF, proc, addr + 3);
+	assignate((w >> 16) & 0xFF, proc, addr + 1);
+	assignate((w >> 8) & 0xFF, proc, addr + 2);
+	assignate((w) & 0xFF, proc, addr + 3);
 	return (w);
 }
 
@@ -85,7 +85,6 @@ t_myop	get_curr_op(t_proc *proc)
 	t_myop		op;
 
 	opcode = deref(proc, 0);
-	// DBG("test: %d\n", opcode);
 	if (opcode > AFF)
 		op = myop_tab[0];
 	else
@@ -99,7 +98,6 @@ t_myop	get_curr_op(t_proc *proc)
 		}
 #endif
 	}
-	// DBG("test: %s\n", op.src->name);
 	return (op);
 }
 
