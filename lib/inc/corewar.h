@@ -99,6 +99,7 @@ t_address	deref_short(t_proc *proc, t_address addr);
 
 // nonito
 
+#include <limits.h>
 
 typedef struct s_op	t_op;
 typedef void(*t_op_exec)(t_proc *proc, const t_op *op);
@@ -153,5 +154,26 @@ typedef struct	s_args
 }				t_args;
 
 void show_pc_movement(t_args *args, t_proc *proc, char *op_name, t_offset op_length);
+
+uint8_t gather_dir(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
+uint8_t gather_ind(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
+uint8_t gather_reg(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
+
+typedef uint8_t(*gather_f)(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
+
+void	nop_exec(t_proc *proc, const t_op *op);
+void	live_exec(t_proc *proc, const t_op *op);
+void	ld_exec(t_proc *proc, const t_op *op);
+void	st_exec(t_proc *proc, const t_op *op);
+void	add_exec(t_proc *proc, const t_op *op);
+void	sub_exec(t_proc *proc, const t_op *op);
+void	and_exec(t_proc *proc, const t_op *op);
+void	or_exec(t_proc *proc, const t_op *op);
+void	xor_exec(t_proc *proc, const t_op *op);
+void	zjmp_exec(t_proc *proc, const t_op *op);
+
+void ldi_exec(t_proc *proc, const t_op *op);
+
+void	aff_exec(t_proc *proc, const t_op *op);
 
 #endif

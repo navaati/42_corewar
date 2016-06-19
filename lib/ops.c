@@ -1,9 +1,27 @@
 #include <libft.h>
 
 #include "corewar_priv.h"
+#include "corewar.h"
 #include "hooks.h"
 
-#define INCR_PC_LEN(x) {args.len += x; proc->pc += x;}
+static gather_f gather_table[] = {
+	NULL,
+	gather_reg,
+	gather_dir,
+	gather_ind
+};
+
+static uint8_t	gather_match(t_proc *proc, const t_op *op, t_args *args, uint8_t index)
+{
+	uint8_t		code;
+
+	code = args->fields[index].code;
+	if (gather_table[code]) {
+		if (!gather_table[code](proc, op, args, index))
+			return (0);
+	}
+	return (1);
+}
 
 static t_args	*gather_args(t_proc *proc, const t_op *op)
 {
@@ -11,9 +29,10 @@ static t_args	*gather_args(t_proc *proc, const t_op *op)
 	static t_args	args;
 
 	ft_bzero(&args, sizeof(t_args));
-	INCR_PC_LEN(1);
-	coding_byte = deref(proc, 0);
-	INCR_PC_LEN(1);
+	args.len += 1;
+	coding_byte = deref(proc, 1);
+	args.len += 1;
+	proc->pc += args.len;
 
 	int i = 0;
 	while (i < op->nbr_params)
@@ -21,30 +40,10 @@ static t_args	*gather_args(t_proc *proc, const t_op *op)
 		uint8_t code = (coding_byte >> 6) & 0xFF;
 
 		args.fields[i].code = code;
-		if (code == DIR_CODE) {
-			INCR_PC_LEN(4);
-			if (op->params[i] & T_DIR)
-				args.fields[i].param = deref_word(proc, -4);
-			else
-				return (&args);
-		}
-		else if (code == IND_CODE) {
-			INCR_PC_LEN(2);
-			if (op->params[i] & T_IND)
-				args.fields[i].param = deref_short(proc, -2);
-			else
-				return (&args);
-		}
-		else if (code == REG_CODE) {
-			INCR_PC_LEN(1);
-			if (op->params[i] & T_REG)
-				args.fields[i].param = deref(proc, -1);
-			else
-				return (&args);
-		}
+		if (!gather_match(proc, op, &args, i))
+			return (&args);
 
 		i += 1;
-		args.nbr += 1;
 		coding_byte = coding_byte << 2;
 	}
 
@@ -52,14 +51,14 @@ static t_args	*gather_args(t_proc *proc, const t_op *op)
 	return (&args);
 }
 
-static void	nop_exec(t_proc *proc, const t_op *op)
+void	nop_exec(t_proc *proc, const t_op *op)
 {
 	(void)proc;
 	(void)op;
 	proc->pc += 1;
 }
 
-static void	live_exec(t_proc *proc, const t_op *op)
+void	live_exec(t_proc *proc, const t_op *op)
 {
 	t_word	champion;
 	t_vm	*vm;
@@ -67,22 +66,33 @@ static void	live_exec(t_proc *proc, const t_op *op)
 	(void)op;
 	vm = proc->vm;
 	champion = deref_word(proc, 1);
-	if (champion < vm->nb_champions)
-		vm->winner = champion;
+
 	proc->live = true;
-	vm->nbr_live++;
+	proc->pc += 5;
 
 	t_args args;
-	args = (t_args){ .len = 5, .fields = { { .param = champion } } };
+	args = (t_args){ .nbr = 1, .len = 5, .fields = { { .param = champion } } };
 	exec_op_hook(&args, proc, "live", args.len);
+
+	champion = UINT_MAX + 1 - champion;
+	if (champion <= vm->nb_champions && champion != 0) {
+
+		if (g_flags.v & 0x01)
+			DBG("Player %d (%s) is said to be alive\n", (int)champion, vm->champions[champion - 1].name);
+
+		vm->winner = champion;
+		vm->nbr_live++;
+	}
+
+	show_pc_movement(&args, proc, "live", args.len);
 }
 
-static void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
+void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 {
 	t_args *args = gather_args(proc, op);
 
 	if (args->nbr != op->nbr_params)
-		return exec_op_hook(args, proc, "ld", args->len);
+		return (show_pc_movement(args, proc, "ld", args->len));
 
 	if (args->fields[0].code == IND_CODE) {
 		register_set(proc, args->fields[1].param, deref_word(proc, args->fields[0].param - args->len));
@@ -97,15 +107,16 @@ static void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 	else
 		proc->carry = false;
 
-	return exec_op_hook(args, proc, "ld", args->len);
+	exec_op_hook(args, proc, "ld", args->len);
+	show_pc_movement(args, proc, "ld", args->len);
 };
 
-static void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
+void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
 {
 	t_args *args = gather_args(proc, op);
 
 	if (args->nbr != op->nbr_params)
-		return (exec_op_hook(args, proc, "st", args->len));
+		return (show_pc_movement(args, proc, "st", args->len));
 
 	if (args->fields[1].code == IND_CODE) {
 		assignate_word(register_get(proc, args->fields[0].param), proc, args->fields[1].param % IDX_MOD - args->len);
@@ -114,16 +125,17 @@ static void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
 		register_set(proc, args->fields[1].param, register_get(proc, args->fields[0].param));
 	}
 
-	return (exec_op_hook(args, proc, "st", args->len));
+	exec_op_hook(args, proc, "st", args->len);
+	show_pc_movement(args, proc, "st", args->len);
 }
 
-static void add_exec(t_proc *proc, const t_op *op)
+void add_exec(t_proc *proc, const t_op *op)
 {
 	t_args *args = gather_args(proc, op);
 
 	(void)op;
 	if (args->nbr != op->nbr_params)
-		return exec_op_hook(args, proc, "add", args->len) ;
+		return (show_pc_movement(args, proc, "add", args->len));
 
 	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) + register_get(proc, args->fields[1].param));
 
@@ -132,16 +144,17 @@ static void add_exec(t_proc *proc, const t_op *op)
 	else
 		proc->carry = false;
 
-	return exec_op_hook(args, proc, "add", args->len) ;
+	exec_op_hook(args, proc, "add", args->len);
+	show_pc_movement(args, proc, "add", args->len);
 }
 
-static void sub_exec(t_proc *proc, const t_op *op)
+void sub_exec(t_proc *proc, const t_op *op)
 {
 	t_args *args = gather_args(proc, op);
 
 	(void)op;
 	if (args->nbr != op->nbr_params)
-		return exec_op_hook(args, proc, "sub", args->len) ;
+		return (show_pc_movement(args, proc, "sub", args->len));
 
 	register_set(proc, args->fields[2].param, register_get(proc, args->fields[0].param) - register_get(proc, args->fields[1].param));
 
@@ -150,57 +163,132 @@ static void sub_exec(t_proc *proc, const t_op *op)
 	else
 		proc->carry = false;
 
-	return exec_op_hook(args, proc, "sub", args->len) ;
+	exec_op_hook(args, proc, "sub", args->len);
+	show_pc_movement(args, proc, "sub", args->len);
 }
 
-static void	zjmp_exec(t_proc *proc, const t_op *op)
+void and_exec(t_proc *proc, const t_op *op)
+{
+	t_args *args = gather_args(proc, op);
+
+	(void)op;
+	if (args->nbr != op->nbr_params)
+		return (show_pc_movement(args, proc, "and", args->len)) ;
+
+	if (args->fields[0].code == REG_CODE) {
+		args->fields[0].param = register_get(proc, args->fields[0].param);
+	}
+	else if (args->fields[0].code == IND_CODE) {
+		args->fields[0].param = deref_word(proc, args->fields[0].param - args->len);
+	}
+
+	if (args->fields[1].code == REG_CODE) {
+		args->fields[1].param = register_get(proc, args->fields[1].param);
+	}
+	else if (args->fields[1].code == IND_CODE) {
+		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
+	}
+
+	if (args->fields[2].param > 0) {
+		register_set(proc, args->fields[2].param, args->fields[0].param & args->fields[1].param );
+		exec_op_hook(args, proc, "and", args->len);
+	}
+
+	show_pc_movement(args, proc, "and", args->len);
+}
+
+void or_exec(t_proc *proc, const t_op *op)
+{
+	t_args *args = gather_args(proc, op);
+
+	(void)op;
+	if (args->nbr != op->nbr_params)
+		return (show_pc_movement(args, proc, "or", args->len));
+
+	if (args->fields[0].code == REG_CODE) {
+		args->fields[0].param = register_get(proc, args->fields[0].param);
+	}
+	else if (args->fields[0].code == IND_CODE) {
+		args->fields[0].param = deref_word(proc, args->fields[0].param - args->len);
+	}
+
+	if (args->fields[1].code == REG_CODE) {
+		args->fields[1].param = register_get(proc, args->fields[1].param);
+	}
+	else if (args->fields[1].code == IND_CODE) {
+		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
+	}
+
+	if (args->fields[2].param > 0) {
+		register_set(proc, args->fields[2].param, args->fields[0].param | args->fields[1].param );
+		exec_op_hook(args, proc, "or", args->len);
+	}
+
+	show_pc_movement(args, proc, "or", args->len);
+}
+
+void xor_exec(t_proc *proc, const t_op *op)
+{
+	t_args *args = gather_args(proc, op);
+
+	(void)op;
+	if (args->nbr != op->nbr_params)
+		return (show_pc_movement(args, proc, "xor", args->len));
+
+	if (args->fields[0].code == REG_CODE) {
+		args->fields[0].param = register_get(proc, args->fields[0].param);
+	}
+	else if (args->fields[0].code == IND_CODE) {
+		args->fields[0].param = deref_word(proc, args->fields[0].param - args->len);
+	}
+
+	if (args->fields[1].code == REG_CODE) {
+		args->fields[1].param = register_get(proc, args->fields[1].param);
+	}
+	else if (args->fields[1].code == IND_CODE) {
+		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
+	}
+
+	if (args->fields[2].param > 0) {
+		register_set(proc, args->fields[2].param, args->fields[0].param ^ args->fields[1].param );
+		exec_op_hook(args, proc, "xor", args->len);
+	}
+
+	show_pc_movement(args, proc, "xor", args->len);
+}
+
+void	zjmp_exec(t_proc *proc, const t_op *op)
 {
 	t_args args;
 
 	(void)op;
 	if (proc->carry){
 		args = (t_args){ .len = deref_short(proc, 1), .fields = { { .param = deref_short(proc, 1) } } };
-		exec_op_hook(&args, proc, "zjmp", args.len);
 		proc->pc += deref_short(proc, 1);
+		exec_op_hook(&args, proc, "zjmp", args.len);
+		// show_pc_movement(&args, proc, "zjmp", args.len);
 	}
 	else {
-		args = (t_args){ .len = deref_short(proc, 1), .fields = { { .param = deref_short(proc, 1) } } };
-		exec_op_hook(&args, proc, "zjmp", args.len);
+		args = (t_args){ .len = 3, .fields = { { .param = deref_short(proc, 1) } } };
 		proc->pc += 3;
+		exec_op_hook(&args, proc, "zjmp", args.len);
+		show_pc_movement(&args, proc, "zjmp", args.len);
 	}
 }
 
-static void	aff_exec(t_proc *proc, const t_op *op)
+void	aff_exec(t_proc *proc, const t_op *op)
 {
 	uint8_t	coding_byte;
 	uint8_t	reg_num;
 
-	(void)op;
-	coding_byte = deref(proc, 1);
-	if (coding_byte != REG_CODE << 6)
-		proc->pc += 2;
-	reg_num = deref(proc, 2);
-	aff_hook(proc, register_get(proc, reg_num));
-	proc->pc += 3;
-}
+	t_args *args = gather_args(proc, op);
 
-const t_myop	myop_tab[] =
-{
-	{ &((t_op){"nop", 1, {0}, 0, 1, "nop", 0, 0}),  nop_exec},
-	{&op_tab[0],  live_exec},
-	{&op_tab[1],  ld_exec},
-	{&op_tab[2],  st_exec},
-	{&op_tab[3],  add_exec},
-	{&op_tab[4],  sub_exec},
-	{&op_tab[5],  NULL},
-	{&op_tab[6],  NULL},
-	{&op_tab[7],  NULL},
-	{&op_tab[8],  zjmp_exec},
-	{&op_tab[9],  NULL},
-	{&op_tab[10], NULL},
-	{&op_tab[11], NULL},
-	{&op_tab[12], NULL},
-	{&op_tab[13], NULL},
-	{&op_tab[14], NULL},
-	{&op_tab[15], aff_exec},
-};
+	coding_byte = deref(proc, 1);
+	if (coding_byte != REG_CODE << 6) {
+		return show_pc_movement(args, proc, "aff", args->len);
+	}
+	reg_num = deref(proc, 2);
+
+	aff_hook(proc, register_get(proc, reg_num));
+	show_pc_movement(args, proc, "aff", args->len);
+}

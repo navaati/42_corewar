@@ -39,3 +39,24 @@ t_op    op_tab[17] =
 	{"aff", 1, {T_REG}, 16, 2, "aff", 1, 0},
 	{0, 0, {0}, 0, 0, 0, 0, 0}
 };
+
+const t_myop	myop_tab[] =
+{
+	{ &((t_op){"nop", 1, {0}, 0, 1, "nop", 0, 0}),  nop_exec},
+	{&op_tab[0],  live_exec},
+	{&op_tab[1],  ld_exec},
+	{&op_tab[2],  st_exec},
+	{&op_tab[3],  add_exec},
+	{&op_tab[4],  sub_exec},
+	{&op_tab[5],  and_exec},
+	{&op_tab[6],  or_exec},
+	{&op_tab[7],  xor_exec},
+	{&op_tab[8],  zjmp_exec},
+	{&op_tab[9],  ldi_exec},
+	{&op_tab[10], NULL},
+	{&op_tab[11], NULL},
+	{&op_tab[12], NULL},
+	{&op_tab[13], NULL},
+	{&op_tab[14], NULL},
+	{&op_tab[15], aff_exec},
+};
