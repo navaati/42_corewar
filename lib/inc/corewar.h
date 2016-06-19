@@ -99,6 +99,7 @@ t_address	deref_short(t_proc *proc, t_address addr);
 
 // nonito
 
+
 typedef struct s_op	t_op;
 typedef void(*t_op_exec)(t_proc *proc, const t_op *op);
 
@@ -128,6 +129,8 @@ typedef struct		s_flags
 	uint32_t		d;
 }					t_flags;
 
+extern t_flags g_flags;
+
 bool	cycle(t_vm *vm, t_flags *flags);
 
 uint8_t assignate(uint8_t c, t_proc *proc, t_address addr);
@@ -139,7 +142,7 @@ t_word	register_get(t_proc *proc, uint8_t index);
 typedef struct	s_field
 {
 	uint8_t		code;
-	t_word		param;	
+	t_word		param;
 }				t_field;
 
 typedef struct	s_args
@@ -149,5 +152,6 @@ typedef struct	s_args
 	t_field		fields[4];
 }				t_args;
 
+void show_pc_movement(t_args *args, t_proc *proc, char *op_name, t_offset op_length);
 
 #endif
