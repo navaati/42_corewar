@@ -118,16 +118,16 @@ int		main(int argc, char **argv)
 	int optind = get_opt(argc, argv);
 
 	if (!init(&vm, argc - optind, argv + optind))
-		return (1);	
+		return (1);
 	while (cycle(&vm, &g_flags))
 		debug_cycles(&vm);
-	ft_putstr("\nHalt: ");
+	// ft_putstr("\nHalt: ");
 	if (vm.winner == NO_CHAMPION)
 		ft_putendl("nobody won\n");
 	else
 	{
 		ft_putstr("winner is ");
-		ft_putendl(vm.champions[vm.winner].name);
+		ft_putendl(vm.champions[vm.winner - 1].name);
 	}
 	return (0);
 }
