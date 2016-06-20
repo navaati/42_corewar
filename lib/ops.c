@@ -91,11 +91,11 @@ void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 {
 	t_args *args = gather_args(proc, op);
 
-	if (args->nbr != op->nbr_params)
+	if (args->nbr != op->nbr_params || args->fields[1].param == 0)
 		return (show_pc_movement(args, proc, "ld", args->len));
 
 	if (args->fields[0].code == IND_CODE) {
-		register_set(proc, args->fields[1].param, deref_word(proc, args->fields[0].param - args->len));
+		register_set(proc, args->fields[1].param, deref_word(proc, args->fields[0].param % IDX_MOD - args->len));
 		args->fields[0].param = register_get(proc, args->fields[1].param);
 	}
 	else {
@@ -274,6 +274,69 @@ void	zjmp_exec(t_proc *proc, const t_op *op)
 		exec_op_hook(&args, proc, "zjmp", args.len);
 		show_pc_movement(&args, proc, "zjmp", args.len);
 	}
+}
+
+void	fork_exec(t_proc *proc, const t_op *op)
+{
+	t_proc	*new_proc;
+	t_args args;
+
+	(void)op;
+	new_proc = allocate_proc_node(proc->vm);
+	*new_proc = *proc;
+	new_proc->nbr = (++proc->vm->nb_proc);
+	forward_pc(new_proc, deref_short(proc, 1) % IDX_MOD);
+	new_proc->wait = get_curr_op(new_proc).src->delay;
+	new_proc->live = false;
+
+	args = (t_args){ .len = 3, .fields = { { .param = new_proc->pc - proc->pc }, { .param = new_proc->pc } } };
+	proc->pc += 3;
+	exec_op_hook(&args, proc, "fork", args.len);
+	show_pc_movement(&args, proc, "fork", args.len);
+}
+
+void	lld_exec(t_proc *proc, const t_op *op)
+{
+	t_args *args = gather_args(proc, op);
+
+	if (args->nbr != op->nbr_params || args->fields[1].param == 0)
+		return (show_pc_movement(args, proc, "lld", args->len));
+
+	if (args->fields[0].code == IND_CODE) {
+		register_set(proc, args->fields[1].param, deref_short(proc, args->fields[0].param - args->len));
+		args->fields[0].param = register_get(proc, args->fields[1].param);
+	}
+	else {
+		register_set(proc, args->fields[1].param, args->fields[0].param);
+	}
+
+	if (register_get(proc, args->fields[1].param) == 0)
+		proc->carry = true;
+	else
+		proc->carry = false;
+
+	exec_op_hook(args, proc, "lld", args->len);
+	show_pc_movement(args, proc, "lld", args->len);
+}
+
+
+void	lfork_exec(t_proc *proc, const t_op *op)
+{
+	t_proc	*new_proc;
+	t_args args;
+
+	(void)op;
+	new_proc = allocate_proc_node(proc->vm);
+	*new_proc = *proc;
+	new_proc->nbr = (++proc->vm->nb_proc);
+	forward_pc(new_proc, deref_short(proc, 1));
+	new_proc->wait = get_curr_op(new_proc).src->delay;
+	new_proc->live = false;
+
+	args = (t_args){ .len = 3, .fields = { { .param = new_proc->pc - proc->pc }, { .param = new_proc->pc } } };
+	proc->pc += 3;
+	exec_op_hook(&args, proc, "lfork", args.len);
+	show_pc_movement(&args, proc, "lfork", args.len);
 }
 
 void	aff_exec(t_proc *proc, const t_op *op)

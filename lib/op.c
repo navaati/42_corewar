@@ -13,7 +13,7 @@
 #include <corewar.h>
 #include <op.h>
 
-t_op    op_tab[17] =
+t_op	op_tab[17] =
 {
 	{"live", 1, {T_DIR}, 1, 10, "alive", 0, 0},
 	{"ld", 2, {T_DIR | T_IND, T_REG}, 2, 5, "load", 1, 0},
@@ -53,10 +53,10 @@ const t_myop	myop_tab[] =
 	{&op_tab[7],  xor_exec},
 	{&op_tab[8],  zjmp_exec},
 	{&op_tab[9],  ldi_exec},
-	{&op_tab[10], NULL},
-	{&op_tab[11], NULL},
-	{&op_tab[12], NULL},
-	{&op_tab[13], NULL},
-	{&op_tab[14], NULL},
+	{&op_tab[10], sti_exec},
+	{&op_tab[11], fork_exec},
+	{&op_tab[12], lld_exec},
+	{&op_tab[13], lldi_exec},
+	{&op_tab[14], lfork_exec},
 	{&op_tab[15], aff_exec},
 };
