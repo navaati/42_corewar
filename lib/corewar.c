@@ -39,6 +39,11 @@ t_word register_get(t_proc *proc, uint8_t index)
 
 // nonito
 
+void	forward_pc(t_proc *proc, t_offset addr)
+{
+	proc->pc = (proc->pc + addr % MEM_SIZE) % MEM_SIZE;
+}
+
 uint8_t	deref(t_proc *proc, t_address addr)
 {
 	return (proc->vm->memory[(proc->pc + addr) % MEM_SIZE]);
