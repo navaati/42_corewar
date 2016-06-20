@@ -82,6 +82,7 @@ typedef struct	s_vm
 	LIST_HEAD(, s_proc_node)	procs;
 	t_champion	champions[MAX_PLAYERS];
 	size_t		nb_champions;
+	size_t		nb_proc;
 	ssize_t		winner;
 	uint32_t	cycles;
 	uint32_t	next_massacre;
@@ -154,6 +155,8 @@ typedef struct	s_args
 }				t_args;
 
 void show_pc_movement(t_args *args, t_proc *proc, char *op_name, t_offset op_length);
+void	forward_pc(t_proc *proc, t_offset addr);
+
 
 uint8_t gather_dir(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
 uint8_t gather_ind(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
@@ -173,6 +176,11 @@ void	xor_exec(t_proc *proc, const t_op *op);
 void	zjmp_exec(t_proc *proc, const t_op *op);
 
 void ldi_exec(t_proc *proc, const t_op *op);
+void sti_exec(t_proc *proc, const t_op *op);
+void	fork_exec(t_proc *proc, const t_op *op);
+void	lld_exec(t_proc *proc, const t_op *op);
+void lldi_exec(t_proc *proc, const t_op *op);
+void	lfork_exec(t_proc *proc, const t_op *op);
 
 void	aff_exec(t_proc *proc, const t_op *op);
 
