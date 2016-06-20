@@ -43,6 +43,7 @@ static t_err	load_champion(t_vm *vm, t_address pc, const t_champ_desc *desc)
 	};
 	vm->nb_champions++;
 	vm->winner = vm->nb_champions;
+	vm->nb_proc = vm->nb_champions;
 	proc->wait = get_curr_op(proc).src->delay;
 	return (OK);
 }
