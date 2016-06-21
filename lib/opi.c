@@ -146,8 +146,6 @@ void lldi_exec(t_proc *proc, const t_op *op)
 		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
 	}
 
-	DBG("%d\n", args->fields[0].param + args->fields[1].param - args->len);
-	DBG("%d\n", deref_word(proc, args->fields[0].param + args->fields[1].param - args->len));
 	register_set(proc, args->fields[2].param, deref_word(proc, args->fields[0].param + args->fields[1].param));
 
 	exec_op_hook(args, proc, "lldi", args->len);

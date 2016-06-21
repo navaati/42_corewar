@@ -156,7 +156,7 @@ typedef struct	s_args
 
 void show_pc_movement(t_args *args, t_proc *proc, char *op_name, t_offset op_length);
 void	forward_pc(t_proc *proc, t_offset addr);
-
+void pc_incr(t_proc *proc, t_address offset);
 
 uint8_t gather_dir(t_proc *proc, const t_op *op, t_args *args, uint8_t i);
 uint8_t gather_ind(t_proc *proc, const t_op *op, t_args *args, uint8_t i);

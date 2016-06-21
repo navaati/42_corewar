@@ -32,7 +32,7 @@ static t_args	*gather_args(t_proc *proc, const t_op *op)
 	args.len += 1;
 	coding_byte = deref(proc, 1);
 	args.len += 1;
-	proc->pc += args.len;
+	pc_incr(proc, args.len);
 
 	int i = 0;
 	while (i < op->nbr_params)
@@ -55,7 +55,7 @@ void	nop_exec(t_proc *proc, const t_op *op)
 {
 	(void)proc;
 	(void)op;
-	proc->pc += 1;
+	pc_incr(proc, 1);
 }
 
 void	live_exec(t_proc *proc, const t_op *op)
@@ -68,7 +68,7 @@ void	live_exec(t_proc *proc, const t_op *op)
 	champion = deref_word(proc, 1);
 
 	proc->live = true;
-	proc->pc += 5;
+	pc_incr(proc, 5);
 
 	t_args args;
 	args = (t_args){ .nbr = 1, .len = 5, .fields = { { .param = champion } } };
@@ -264,13 +264,13 @@ void	zjmp_exec(t_proc *proc, const t_op *op)
 	(void)op;
 	if (proc->carry){
 		args = (t_args){ .len = deref_short(proc, 1), .fields = { { .param = deref_short(proc, 1) } } };
-		proc->pc += deref_short(proc, 1);
+		pc_incr(proc, deref_short(proc, 1));
 		exec_op_hook(&args, proc, "zjmp", args.len);
 		// show_pc_movement(&args, proc, "zjmp", args.len);
 	}
 	else {
 		args = (t_args){ .len = 3, .fields = { { .param = deref_short(proc, 1) } } };
-		proc->pc += 3;
+		pc_incr(proc, 3);
 		exec_op_hook(&args, proc, "zjmp", args.len);
 		show_pc_movement(&args, proc, "zjmp", args.len);
 	}
@@ -279,18 +279,22 @@ void	zjmp_exec(t_proc *proc, const t_op *op)
 void	fork_exec(t_proc *proc, const t_op *op)
 {
 	t_proc	*new_proc;
+	t_word arg;
 	t_args args;
+
 
 	(void)op;
 	new_proc = allocate_proc_node(proc->vm);
 	*new_proc = *proc;
 	new_proc->nbr = (++proc->vm->nb_proc);
-	forward_pc(new_proc, deref_short(proc, 1) % IDX_MOD);
-	new_proc->wait = get_curr_op(new_proc).src->delay;
+	arg = deref_short(proc, 1);
+	forward_pc(new_proc, arg % IDX_MOD);
+	new_proc->wait = get_curr_op(new_proc).src->delay - 1;
+	// new_proc->wait = 0;
 	new_proc->live = false;
 
-	args = (t_args){ .len = 3, .fields = { { .param = new_proc->pc - proc->pc }, { .param = new_proc->pc } } };
-	proc->pc += 3;
+	args = (t_args){ .len = 3, .fields = { { .param = arg }, { .param = new_proc->pc } } };
+	pc_incr(proc, 3);
 	exec_op_hook(&args, proc, "fork", args.len);
 	show_pc_movement(&args, proc, "fork", args.len);
 }
@@ -324,17 +328,19 @@ void	lfork_exec(t_proc *proc, const t_op *op)
 {
 	t_proc	*new_proc;
 	t_args args;
+	t_word arg;
 
 	(void)op;
 	new_proc = allocate_proc_node(proc->vm);
 	*new_proc = *proc;
 	new_proc->nbr = (++proc->vm->nb_proc);
-	forward_pc(new_proc, deref_short(proc, 1));
-	new_proc->wait = get_curr_op(new_proc).src->delay;
+	arg = deref_short(proc, 1);
+	new_proc->pc = arg % MEM_SIZE;
+	new_proc->wait = get_curr_op(new_proc).src->delay - 1;
 	new_proc->live = false;
 
-	args = (t_args){ .len = 3, .fields = { { .param = new_proc->pc - proc->pc }, { .param = new_proc->pc } } };
-	proc->pc += 3;
+	args = (t_args){ .len = 3, .fields = { { .param = arg }, { .param = proc->pc + arg } } };
+	pc_incr(proc, 3);
 	exec_op_hook(&args, proc, "lfork", args.len);
 	show_pc_movement(&args, proc, "lfork", args.len);
 }

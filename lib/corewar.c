@@ -37,6 +37,11 @@ t_word register_get(t_proc *proc, uint8_t index)
 	return (proc->regs[index - 1]);
 }
 
+void pc_incr(t_proc *proc, t_address offset)
+{
+	proc->pc = (proc->pc + offset) % MEM_SIZE;
+}
+
 // nonito
 
 void	forward_pc(t_proc *proc, t_offset addr)
