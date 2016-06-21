@@ -108,6 +108,16 @@ static void debug_fork(t_args *p, t_proc *proc, char *op_name, t_offset op_lengt
 		DBG("P %4d | fork %d (%d)\n", proc->nbr, (int)p->fields[0].param, (int)p->fields[1].param);
 }
 
+static void debug_lfork(t_args *p, t_proc *proc, char *op_name, t_offset op_length)
+{
+	(void)p;
+	(void)proc;
+	(void)op_name;
+	(void)op_length;
+	if (g_flags.v & 0x04)
+		DBG("P %4d | lfork %d (%d)\n", proc->nbr, (int)p->fields[0].param, (int)p->fields[1].param);
+}
+
 static t_debug_function debug_array[16] = {
 	debug_live,
 	debug_std,
@@ -123,7 +133,7 @@ static t_debug_function debug_array[16] = {
 	debug_fork,
 	debug_std,
 	debug_std,
-	debug_std,
+	debug_lfork,
 	debug_std,
 };
 
