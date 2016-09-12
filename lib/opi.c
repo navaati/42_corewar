@@ -87,7 +87,7 @@ void ldi_exec(t_proc *proc, const t_op *op)
 		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
 	}
 
-	register_set(proc, args->fields[2].param, deref_word(proc, (args->fields[0].param + args->fields[1].param) % IDX_MOD - args->len));
+	register_set(proc, args->fields[2].param, deref_word(proc, ((short)args->fields[0].param + (short)args->fields[1].param) % IDX_MOD - args->len));
 
 	exec_op_hook(args, proc, "ldi", args->len);
 	show_pc_movement(args, proc, "ldi", args->len);
@@ -116,7 +116,7 @@ void sti_exec(t_proc *proc, const t_op *op)
 		args->fields[2].param = deref_word(proc, args->fields[2].param - args->len);
 	}
 
-	assignate_word( register_get(proc, args->fields[0].param), proc, (args->fields[1].param + args->fields[2].param) % IDX_MOD - args->len);
+	assignate_word( register_get(proc, args->fields[0].param), proc, (short)(args->fields[1].param + args->fields[2].param) % IDX_MOD - args->len);
 
 	exec_op_hook(args, proc, "sti", args->len);
 	show_pc_movement(args, proc, "sti", args->len);

@@ -72,7 +72,7 @@ end
 
 local champs = {}
 
-for l in io.popen('ls champions/*.s'):lines() do
+for l in io.popen('ls */*.s'):lines() do
 	table.insert(champs, l:match('(.+)%.'))
 end
 
@@ -119,8 +119,8 @@ local compile = exec('../../zaz_corewar/asm')('')('')
 -- 8 : Show deaths
 -- 16 : Show PC movements (Except for jumps)
 
-local corewar = exec('../build/cli/corewar')('-v 31 -d 200')(' &> /tmp/corewar_file')
-local zazcorewar = exec('../../zaz_corewar/corewar')('-v 31 -d 200')(' &> /tmp/zaz_file')
+local corewar = exec('../build/cli/corewar')('-v 20 -d 4000')(' &> /tmp/corewar_file')
+local zazcorewar = exec('../../zaz_corewar/corewar')('-v 20 -d 4000')(' &> /tmp/zaz_file')
 
 function color_diff(file)
 	for l in file:lines() do

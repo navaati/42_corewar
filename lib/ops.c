@@ -112,16 +112,22 @@ void	ld_exec(t_proc *proc, const t_op *op) // no reg0 protection
 };
 
 void st_exec(t_proc *proc, const t_op *op) // no reg0 protection
-{
+{ ;
 	t_args *args = gather_args(proc, op);
 
-	if (args->nbr != op->nbr_params)
+	if (args->nbr != op->nbr_params) {
+		// DBG("1\n");
 		return (show_pc_movement(args, proc, "st", args->len));
+	}
 
+	// args->fields[1].param = (short)(args->fields[1].param);
 	if (args->fields[1].code == IND_CODE) {
-		assignate_word(register_get(proc, args->fields[0].param), proc, args->fields[1].param % IDX_MOD - args->len);
+		if (!args->fields[0].param)
+			return (show_pc_movement(args, proc, "st", args->len));
+		assignate_word(register_get(proc, args->fields[0].param), proc, args->fields[1].param - args->len);
 	}
 	else if (args->fields[1].code == REG_CODE) {
+		// DBG("3\n");
 		register_set(proc, args->fields[1].param, register_get(proc, args->fields[0].param));
 	}
 
@@ -191,6 +197,10 @@ void and_exec(t_proc *proc, const t_op *op)
 
 	if (args->fields[2].param > 0) {
 		register_set(proc, args->fields[2].param, args->fields[0].param & args->fields[1].param );
+		if (register_get(proc, args->fields[2].param) == 0)
+			proc->carry = true;
+		else
+			proc->carry = false;
 		exec_op_hook(args, proc, "and", args->len);
 	}
 
@@ -249,6 +259,8 @@ void xor_exec(t_proc *proc, const t_op *op)
 		args->fields[1].param = deref_word(proc, args->fields[1].param - args->len);
 	}
 
+	// printf("-> %d\n", args->fields[0].param);
+
 	if (args->fields[2].param > 0) {
 		register_set(proc, args->fields[2].param, args->fields[0].param ^ args->fields[1].param );
 		exec_op_hook(args, proc, "xor", args->len);
@@ -279,7 +291,7 @@ void	zjmp_exec(t_proc *proc, const t_op *op)
 void	fork_exec(t_proc *proc, const t_op *op)
 {
 	t_proc	*new_proc;
-	t_word arg;
+	short	arg;
 	t_args args;
 
 
@@ -287,12 +299,13 @@ void	fork_exec(t_proc *proc, const t_op *op)
 	new_proc = allocate_proc_node(proc->vm);
 	*new_proc = *proc;
 	new_proc->nbr = (++proc->vm->nb_proc);
-	arg = deref_short(proc, 1);
-	forward_pc(new_proc, arg % IDX_MOD);
+	arg = ((short)deref_short(proc, 1) % IDX_MOD);
+	forward_pc(new_proc, arg);
 	new_proc->wait = get_curr_op(new_proc).src->delay - 1;
 	// new_proc->wait = 0;
-	new_proc->live = false;
+	// new_proc->live = false;
 
+	// DBG("fork: %d\n", (int)arg);
 	args = (t_args){ .len = 3, .fields = { { .param = arg }, { .param = new_proc->pc } } };
 	pc_incr(proc, 3);
 	exec_op_hook(&args, proc, "fork", args.len);
@@ -339,6 +352,7 @@ void	lfork_exec(t_proc *proc, const t_op *op)
 	new_proc->wait = get_curr_op(new_proc).src->delay - 1;
 	new_proc->live = false;
 
+	// printf("lfork: %d\n", (char)arg);
 	args = (t_args){ .len = 3, .fields = { { .param = arg }, { .param = proc->pc + arg } } };
 	pc_incr(proc, 3);
 	exec_op_hook(&args, proc, "lfork", args.len);

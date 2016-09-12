@@ -137,18 +137,23 @@ static void	massacre(t_vm *vm)
 	if (vm->nbr_live >= NBR_LIVE ||
 		vm->last_cycles_decr >= MAX_CHECKS)
 	{
-		assert(vm->cycle_to_die >= CYCLE_DELTA);
+		if (vm->cycle_to_die <  CYCLE_DELTA) {
+			printf("Winner is %zd\n", vm->winner);
+			exit(1);
+		}
 		vm->cycle_to_die -= CYCLE_DELTA;
 		decr_ctd_hook(vm);
 		vm->last_cycles_decr = 0;
 	}
 	else
 		vm->last_cycles_decr++;
+
 	vm->nbr_live = 0;
 	LIST_FOREACH_SAFE(node, &vm->procs, entries, node_temp)
 	{
 		if (!node->proc.live)
 		{
+			DBG("I killed someone %d\n", node->proc.nbr);
 			kill_proc_hook(&node->proc);
 			LIST_REMOVE(node, entries);
 			free(node);
